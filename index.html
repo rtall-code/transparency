@@ -80,6 +80,8 @@
   .hero h1{font-size:clamp(34px,5.4vw,58px); line-height:1.12; margin:0 0 26px; font-weight:600; text-wrap:balance}
   .byline{font-size:18px; color:var(--sec); margin:0 0 8px}
   .meta{font:400 12.5px/1.7 var(--ui); color:var(--mut); margin:0}
+  /* shown only where it is useful — see the mobile block below */
+  .deskflag{display:none; margin:22px 0 0; font:400 13px/1.5 var(--ui); color:var(--mut)}
   .builtnote{position:absolute; bottom:24px; right:26px; margin:0;
              font:400 11.5px/1.4 var(--ui); color:var(--mut); letter-spacing:.02em}
   .scrollcue{position:absolute; bottom:26px; left:50%; transform:translateX(-50%); font:500 11px/1 var(--ui); letter-spacing:.14em; color:var(--mut); text-transform:uppercase}
@@ -279,6 +281,7 @@
     .ltxt{font-size:15px} .ltxt .d{display:none}   /* headline claims only; the gloss is desktop-only */
     .ledgerfoot{font-size:15px; margin-top:26px; padding-top:16px}
     .overlaycard{padding:26px 24px}
+    .deskflag{display:block}
   }
 
   /* ============ short-cut additions ============ */
@@ -832,6 +835,7 @@
     <p class="byline">Roberto Tallarita &middot; Harvard Law School</p>
     <p class="meta">Working draft of July 31, 2026</p>
     <p><a class="ssrnlink" href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7248478" target="_blank" rel="noopener">Read the full paper on SSRN &#8594;</a></p>
+    <p class="deskflag">This is built to be read on a desktop screen.</p>
   </div>
   <p class="builtnote">Built with Claude Opus 5</p>
   <div class="scrollcue">Scroll &#8595;</div>
