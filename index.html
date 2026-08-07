@@ -730,6 +730,94 @@
     .fxsec .fxname{transform:none}
     .secheading{top:1.5vh}
   }
+
+  /* ============ narrow screens ============
+     Below ~700px the pieces that assume a wide figure stop fitting: the
+     three-column statute table, the annotations that flank it, and the side
+     panels. Nothing in here touches the desktop layout. */
+  @media (max-width: 700px){
+    /* No component may push the page sideways. This must be clip, not hidden:
+       overflow-x:hidden makes the page a scroll container, which silently
+       kills position:sticky and unpins every figure. */
+    body{overflow-x:clip}
+
+    /* the fork: the two effects stack, and the arrow column collapses */
+    .fxstage{max-width:none}
+    .fxrow{grid-template-columns:minmax(0,1fr); gap:9px; margin-bottom:15px}
+    .fxrow > svg, .fxarrow{display:none}
+    .fxname{text-align:center; font-size:17px}
+    .fxhint, .againhint{font-size:15.5px}
+    .againrow{gap:12px}
+
+    /* the statute: two columns, each annotation its own full-width row */
+    .sthead, .stbody{grid-template-columns:minmax(0,1fr) 100px}
+    .sthead > div:nth-child(3){display:none}
+    .stcell{font-size:12.8px; line-height:1.35; padding:9px 9px}
+    .stcell:nth-of-type(1){grid-row:1}
+    .stcell:nth-of-type(2){grid-row:2}
+    .stcell:nth-of-type(3){grid-row:4}
+    .stcell:nth-of-type(4){grid-row:5}
+    .stcell:nth-of-type(5){grid-row:6}
+    .stcat{font-size:13px; padding:8px 5px}
+    .stcat.core{grid-row:1 / span 2}
+    .stcat.noncore{grid-row:4 / span 3}
+    .stnote{grid-column:1 / -1; padding:7px 9px 11px; padding-left:9px;
+            transform:none; font-size:13px; text-align:center}
+    .stnote.core{grid-row:3}
+    .stnote.noncore{grid-row:7}
+    .stnote svg{display:none}
+
+    /* the closing question wraps instead of running off the edge */
+    .cnwords{white-space:normal; text-align:center}
+
+    /* The closing beat carries the implication table AND both prompts. At
+       52vh they land on top of each other, so this act gets a taller figure
+       and the prompts stack underneath rather than flanking. */
+    .actD .figure{height:66vh}
+    .actD .cnbuild{align-items:flex-start; padding-top:2px}
+    .actD .cnwrap{transform:scale(.86); transform-origin:top center}
+    .actD .exnote{left:8px; right:8px; width:auto; transform:none; text-align:center}
+    .actD .ex-doc{top:auto; bottom:76px}
+    .actD .ex-res{top:auto; bottom:4px}
+    .exnote p{font-size:12.5px; margin-bottom:3px}
+    .exnote .clickcue{font-size:13.5px}
+    .exnote svg{display:none}
+
+    /* the explore panels take the screen rather than a column of it */
+    .expanel, .expanel.side-left, .expanel.side-right{
+      left:4vw; right:4vw; width:auto; max-height:84vh; overflow-y:auto;
+      padding:22px 20px 14px}
+    .expanel h3{font-size:16px}
+    .expage p{font-size:14.5px}
+    .expages{min-height:210px}
+
+    /* overlay questions and quote cards */
+    /* border-box, because the padding is otherwise added on top of the width;
+       and a 44px allowance, because 100vw counts a scrollbar the phone
+       does not have but a narrow desktop window does */
+    .overlaycard{box-sizing:border-box; width:min(600px, calc(100vw - 44px)); padding:26px 20px}
+    .overlaycard p{font-size:17.5px}
+    .overlaycard.fromleft{transform:translate(calc(-50% - 30px), -48%)}
+    .overlaycard.fromleft.on{transform:translate(-50%, -48%)}
+
+    /* the hover card has nowhere to sit beside a 400px table */
+    .taxpop{position:static; width:auto; max-width:none; margin:12px auto 0; transform:none}
+
+    /* the two-effects stage is deliberately off-centre on a wide screen;
+       at this width that pushes it off the edge. The existing mobile rule
+       never applied — :not(.fxsec2) out-specifies it. */
+    .fxsec:not(.fxsec2) .fxstage{transform:none}
+
+    /* size the overlay cards off the viewport, not off a container that can
+       be wider than it */
+
+    /* the statute's column head has 100px to live in */
+    .sthead > div{font-size:9.5px; letter-spacing:.04em; padding:0 6px 8px;
+                  overflow-wrap:anywhere; hyphens:auto}
+
+    /* the version pill sits over the top-left of every figure at this width */
+    .greybox-pill{top:8px; right:8px; font-size:9px; padding:5px 9px; letter-spacing:.08em}
+  }
 </style>
 
 <div class="greybox-pill">v.1.0</div>
