@@ -71,7 +71,7 @@
   .greybox-pill{position:fixed; top:14px; right:14px; z-index:50; font:600 10px/1 var(--ui); letter-spacing:.12em; color:var(--mut); border:1px solid var(--hair2); background:var(--card); border-radius:99px; padding:7px 12px}
   .presenter-hud{position:fixed; bottom:16px; right:16px; z-index:60; font:600 12px/1 var(--ui); letter-spacing:.08em; color:var(--sec); background:var(--card); border:1px solid var(--hair2); border-radius:99px; padding:9px 14px; display:none}
   body.presenting .presenter-hud{display:block}
-  body.presenting .greybox-pill, body.presenting .scrollcue{display:none}
+  body.presenting .greybox-pill, body.presenting .scrollcue, body.presenting .builtnote{display:none}
 
   /* ============ hero ============ */
   .hero{min-height:96vh; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; border-bottom:1px solid var(--hair)}
@@ -80,6 +80,8 @@
   .hero h1{font-size:clamp(34px,5.4vw,58px); line-height:1.12; margin:0 0 26px; font-weight:600; text-wrap:balance}
   .byline{font-size:18px; color:var(--sec); margin:0 0 8px}
   .meta{font:400 12.5px/1.7 var(--ui); color:var(--mut); margin:0}
+  .builtnote{position:absolute; bottom:24px; right:26px; margin:0;
+             font:400 11.5px/1.4 var(--ui); color:var(--mut); letter-spacing:.02em}
   .scrollcue{position:absolute; bottom:26px; left:50%; transform:translateX(-50%); font:500 11px/1 var(--ui); letter-spacing:.14em; color:var(--mut); text-transform:uppercase}
 
   /* ============ cinematic opening (full-bleed; steps are invisible scroll drivers) ============ */
@@ -808,12 +810,11 @@
        never applied — :not(.fxsec2) out-specifies it. */
     .fxsec:not(.fxsec2) .fxstage{transform:none}
 
-    /* size the overlay cards off the viewport, not off a container that can
-       be wider than it */
-
     /* the statute's column head has 100px to live in */
     .sthead > div{font-size:9.5px; letter-spacing:.04em; padding:0 6px 8px;
                   overflow-wrap:anywhere; hyphens:auto}
+
+    .builtnote{bottom:16px; right:14px; font-size:10.5px}
 
     /* the version pill sits over the top-left of every figure at this width */
     .greybox-pill{top:8px; right:8px; font-size:9px; padding:5px 9px; letter-spacing:.08em}
@@ -830,9 +831,9 @@
     <h1>The Chilling Effects of Board&nbsp;Transparency</h1>
     <p class="byline">Roberto Tallarita &middot; Harvard Law School</p>
     <p class="meta">Working draft of July 31, 2026</p>
-    <!-- SSRN URL still to be supplied -->
     <p><a class="ssrnlink" href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7248478" target="_blank" rel="noopener">Read the full paper on SSRN &#8594;</a></p>
   </div>
+  <p class="builtnote">Built with Claude Opus 5</p>
   <div class="scrollcue">Scroll &#8595;</div>
 </header>
 
