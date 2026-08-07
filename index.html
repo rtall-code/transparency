@@ -1,0 +1,2283 @@
+<!doctype html>
+<html lang="en">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<title>The Chilling Effects of Board Transparency</title>
+<style>
+  /* ============ tokens ============ */
+  :root{
+    --paper:#f4f4f2; --surface:#fbfbf9; --card:#fffffd;
+    --ink:#17181a; --sec:#54555a; --mut:#8b8c90;
+    --hair:#e2e1dc; --hair2:#d6d5cf;
+    --acc:#1c5cab;
+    --shared:#2a78d6; --closed:#e34948;
+    --shared-wash:#dce9fa; --closed-wash:#f9dedb;
+    --serif:'Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+    --ui:system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#0f1013; --surface:#17181c; --card:#1c1e24;
+      --ink:#f0efea; --sec:#b7b6ae; --mut:#83848a;
+      --hair:#2b2c32; --hair2:#35363d;
+      --acc:#7fb1f0;
+      --shared:#3987e5; --closed:#e66767;
+      --shared-wash:rgba(57,135,229,.16); --closed-wash:rgba(230,103,103,.14);
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#f4f4f2; --surface:#fbfbf9; --card:#fffffd;
+    --ink:#17181a; --sec:#54555a; --mut:#8b8c90;
+    --hair:#e2e1dc; --hair2:#d6d5cf; --acc:#1c5cab;
+    --shared:#2a78d6; --closed:#e34948;
+    --shared-wash:#dce9fa; --closed-wash:#f9dedb;
+  }
+  :root[data-theme="dark"]{
+    --paper:#0f1013; --surface:#17181c; --card:#1c1e24;
+    --ink:#f0efea; --sec:#b7b6ae; --mut:#83848a;
+    --hair:#2b2c32; --hair2:#35363d; --acc:#7fb1f0;
+    --shared:#3987e5; --closed:#e66767;
+    --shared-wash:rgba(57,135,229,.16); --closed-wash:rgba(230,103,103,.14);
+  }
+
+  :root{--crayon:#d95b29}
+  @media (prefers-color-scheme: dark){ :root{--crayon:#ff8a52} }
+  :root[data-theme="light"]{--crayon:#d95b29}
+  :root[data-theme="dark"]{--crayon:#ff8a52}
+
+  /* a fourth hand, deep blue, for the two explore annotations */
+  :root{--crayon4:#16357a}
+  @media (prefers-color-scheme: dark){ :root{--crayon4:#8fb4f2} }
+  :root[data-theme="light"]{--crayon4:#16357a}
+  :root[data-theme="dark"]{--crayon4:#8fb4f2}
+
+  /* second and third hands, for the boardroom annotations */
+  :root{--crayon2:#7b3fa0; --crayon3:#0f7d6f}
+  @media (prefers-color-scheme: dark){ :root{--crayon2:#c08ce8; --crayon3:#56c9b6} }
+  :root[data-theme="light"]{--crayon2:#7b3fa0; --crayon3:#0f7d6f}
+  :root[data-theme="dark"]{--crayon2:#c08ce8; --crayon3:#56c9b6}
+
+  /* the ledger's two verdict colors */
+  :root{--good:#1c7a45; --good-wash:#dff0e4}
+  @media (prefers-color-scheme: dark){ :root{--good:#5cc184; --good-wash:rgba(92,193,132,.14)} }
+  :root[data-theme="light"]{--good:#1c7a45; --good-wash:#dff0e4}
+  :root[data-theme="dark"]{--good:#5cc184; --good-wash:rgba(92,193,132,.14)}
+
+  /* ============ base ============ */
+  html{scroll-behavior:smooth}
+  body{background:var(--paper); color:var(--ink); font-family:var(--serif); margin:0; -webkit-font-smoothing:antialiased}
+  a{color:var(--acc)}
+  svg{font-family:var(--ui)}
+  .greybox-pill{position:fixed; top:14px; right:14px; z-index:50; font:600 10px/1 var(--ui); letter-spacing:.12em; color:var(--mut); border:1px solid var(--hair2); background:var(--card); border-radius:99px; padding:7px 12px}
+  .presenter-hud{position:fixed; bottom:16px; right:16px; z-index:60; font:600 12px/1 var(--ui); letter-spacing:.08em; color:var(--sec); background:var(--card); border:1px solid var(--hair2); border-radius:99px; padding:9px 14px; display:none}
+  body.presenting .presenter-hud{display:block}
+  body.presenting .greybox-pill, body.presenting .scrollcue{display:none}
+
+  /* ============ hero ============ */
+  .hero{min-height:96vh; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; border-bottom:1px solid var(--hair)}
+  .hero-inner{max-width:760px; padding:48px 28px; text-align:center; position:relative; z-index:2}
+  .eyebrow{font:600 11px/1.4 var(--ui); letter-spacing:.16em; text-transform:uppercase; color:var(--acc); margin:0 0 22px}
+  .hero h1{font-size:clamp(34px,5.4vw,58px); line-height:1.12; margin:0 0 26px; font-weight:600; text-wrap:balance}
+  .byline{font-size:18px; color:var(--sec); margin:0 0 8px}
+  .meta{font:400 12.5px/1.7 var(--ui); color:var(--mut); margin:0}
+  .scrollcue{position:absolute; bottom:26px; left:50%; transform:translateX(-50%); font:500 11px/1 var(--ui); letter-spacing:.14em; color:var(--mut); text-transform:uppercase}
+
+  /* ============ cinematic opening (full-bleed; steps are invisible scroll drivers) ============ */
+  .scrolly.chatsec, .scrolly.ledgersec, .scrolly.takesec{display:block; max-width:none}
+  .chatsec .figure, .ledgersec .figure, .takesec .figure{position:sticky; top:0; height:100vh; display:flex; align-items:center; justify-content:center; padding:0; z-index:1}
+  .chatsec .steps, .ledgersec .steps, .takesec .steps{position:relative; z-index:2; margin-top:-100vh; padding:28vh 0 56vh; pointer-events:none}
+  .chatsec .step, .ledgersec .step, .takesec .step{min-height:42vh; padding:0}
+  .chatstage{display:flex; flex-direction:column; align-items:center; padding:0 20px; transition:opacity .5s, filter .5s}
+  .chatsec[data-scene="7"] .chatstage{opacity:.3; filter:blur(2px)}
+  .chatexpl{font-family:var(--serif); font-style:italic; font-size:clamp(19px,2.4vw,26px); line-height:1.45; color:var(--sec); margin:0 0 34px; letter-spacing:.01em; text-align:center}
+  .who{font:600 12.5px/1 var(--ui); letter-spacing:.07em; color:var(--mut); margin-bottom:-7px}
+  .who.in{align-self:flex-start; margin-left:6px}
+  .who.out{align-self:flex-end; margin-right:6px}
+
+  /* the opening question */
+  .bigq{position:absolute; left:50%; top:50%; transform:translate(-50%,-52%); width:min(880px, calc(100% - 56px)); text-align:center; z-index:4}
+  .bigq p{font-family:var(--serif); font-size:clamp(24px,3.4vw,40px); line-height:1.25; font-weight:600; margin:0; text-wrap:balance}
+  .bigq .sub{font:400 14px/1.7 var(--ui); color:var(--mut); margin-top:26px; letter-spacing:.02em}
+
+  /* ============ the ledger ============ */
+  .ledgerstage{width:min(1020px, calc(100% - 48px)); transition:opacity .5s, filter .5s}
+  .ledgersec[data-scene="8"] .ledgerstage{opacity:.26; filter:blur(2px)}
+  .ledgerhed{font:600 11px/1.4 var(--ui); letter-spacing:.16em; text-transform:uppercase; color:var(--mut); text-align:center; margin:0 0 34px}
+  .ledgergrid{display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,56px)}
+  .lcol{min-width:0}
+  .lhead{font:600 13px/1.4 var(--ui); letter-spacing:.13em; text-transform:uppercase; margin:0 0 6px}
+  .lcol.for .lhead{color:var(--good)} .lcol.against .lhead{color:var(--closed)}
+  .lrule{height:2px; border-radius:2px; margin:0 0 20px}
+  /* tint via the colour, not opacity — an opacity here would outrank .rv and the rule would never fade in */
+  .lcol.for .lrule{background:color-mix(in srgb, var(--good) 55%, transparent)}
+  .lcol.against .lrule{background:color-mix(in srgb, var(--closed) 55%, transparent)}
+  .lcol ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:18px}
+  .lcol li{display:grid; grid-template-columns:26px 1fr; gap:12px; align-items:start}
+  .mk{font:600 17px/1.35 var(--ui); text-align:center}
+  .lcol.for .mk{color:var(--good)} .lcol.against .mk{color:var(--closed)}
+  .ltxt{font-family:var(--serif); font-size:16.5px; line-height:1.5; color:var(--ink)}
+  .ltxt .d{display:block; font:400 13px/1.55 var(--ui); color:var(--mut); margin-top:5px}
+  .lcol li.rv:nth-child(2){transition-delay:.10s} .lcol li.rv:nth-child(3){transition-delay:.20s} .lcol li.rv:nth-child(4){transition-delay:.30s}
+  .ledgersec .step{min-height:40vh}   /* eight scenes: keep the ledger from outrunning the scroll */
+  .thread{display:flex; flex-direction:column; gap:14px; width:min(440px, 100%)}
+  .bub{max-width:80%; padding:12px 17px; border-radius:19px; font:400 16.5px/1.45 var(--ui)}
+  .bub.in{align-self:flex-start; background:var(--card); border:1px solid var(--hair2); border-bottom-left-radius:6px; color:var(--ink)}
+  .bub.out{align-self:flex-end; background:var(--shared); color:#fff; border-bottom-right-radius:6px}
+  .overlaycard{position:absolute; left:50%; top:50%; transform:translate(-50%,-48%); width:min(600px, calc(100% - 48px)); background:color-mix(in srgb, var(--card) 68%, transparent); backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px); border:1px solid var(--hair2); border-radius:4px; padding:36px 42px; box-shadow:0 18px 50px rgba(0,0,0,.18); text-align:center; z-index:3}
+  .overlaycard p{font-size:clamp(18px,2.2vw,22px); line-height:1.6; margin:0}
+  .overlaycard p+p{margin-top:14px}
+  .ocq{font-style:italic; color:var(--acc)}
+
+  /* ============ guthrie stage (photo, crayon annotation, statute book) ============ */
+  .gouter{flex:none}
+  .gstage{position:relative; width:620px; height:600px; transform-origin:top left}
+  .secg .card{opacity:1}
+  .photoframe{position:absolute; left:250px; top:40px; width:300px; margin:0}
+  .gphoto{display:block; width:300px; height:390px}
+  .phint{font:400 10.5px/1.5 var(--ui); color:var(--mut); text-align:center; margin-top:9px}
+  .secg .gstage .crayon{position:absolute; left:0; top:0; width:620px; height:600px; max-width:none; max-height:none; pointer-events:none}
+  .crayon path{fill:none; stroke:var(--crayon); stroke-width:4.5; stroke-opacity:.92; stroke-linecap:round; stroke-linejoin:round}
+  .handnote{position:absolute; left:14px; top:436px; width:232px; margin:0; font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-size:13.5px; line-height:1.6; color:var(--crayon); transform:rotate(-2deg)}
+  .bookwrap{position:absolute; left:270px; top:70px; width:260px; height:340px}
+  .bookcover{position:relative; width:100%; height:100%; border-radius:5px 10px 10px 5px; background:linear-gradient(100deg,#152c49,#1d3a5f 45%,#26476f); box-shadow:inset 26px 0 26px -20px rgba(0,0,0,.6), inset -3px 0 8px -4px rgba(255,255,255,.12), 0 16px 38px rgba(0,0,0,.32); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px}
+  .bookcover::before{content:''; position:absolute; inset:15px; border:2px solid rgba(203,164,92,.85); border-radius:3px 7px 7px 3px}
+  .bookcover span{font-family:var(--serif); color:#cfa85e; text-transform:uppercase; font-weight:600; letter-spacing:.16em; text-indent:.16em}
+  .bt1{font-size:29px}
+  .bt2,.bt3{font-size:25px}
+  .bsec{font-size:20px; margin-top:18px}
+  .dust{position:absolute; left:0; top:0; width:620px; height:600px; pointer-events:none; opacity:0; transition:opacity .3s; z-index:2}
+  .gstage.flying .dust{opacity:1}
+  .gstage.flying .photoframe, .gstage.flying .crayon, .gstage.flying .handnote, .gstage.flying .bookwrap{opacity:0 !important; transition:opacity .15s}
+
+  /* ============ scrolly layout ============ */
+  .scrolly{display:grid; grid-template-columns:minmax(320px,400px) minmax(0,1fr); align-items:start; background:var(--paper); max-width:1180px; margin:0 auto}
+  /* The bottom padding must be at least the activation line (50vh), or the
+     sticky figure starts sliding away before the last beat has finished
+     playing — which showed up as the ledger's second column populating while
+     the whole scene was already leaving. 32vh was 18vh short. */
+  .steps{padding:28vh 0 56vh 0}
+  .step{min-height:42vh; display:flex; align-items:center; padding:0 8px 0 clamp(12px,1.6vw,28px)}
+  .card{background:var(--card); border:1px solid var(--hair); border-left:3px solid var(--hair2); border-radius:3px; padding:24px 26px; max-width:420px; box-shadow:0 1px 2px rgba(0,0,0,.05); opacity:.35; transition:opacity .4s, border-color .4s}
+  .step.active .card{border-left-color:var(--acc)}   /* opacity is set per layout, below */
+  .card .kick{font:600 10.5px/1.4 var(--ui); letter-spacing:.14em; text-transform:uppercase; color:var(--acc); margin:0 0 12px}
+  .card p{font-size:16.5px; line-height:1.62; margin:0 0 12px}
+  .card p:last-of-type{margin-bottom:0}
+  .card .q{font-style:italic}
+  .card .cite{font:400 11px/1.6 var(--ui); color:var(--mut); border-top:1px dashed var(--hair); margin-top:14px; padding-top:9px}
+  .figure{position:sticky; top:0; height:100vh; display:flex; align-items:center; justify-content:center; padding:3vh 1.5vw; box-sizing:border-box}
+  .figure svg, .figure .fig-html{width:100%; max-width:790px; max-height:94vh; height:auto}
+
+  /* ============ reveal machinery ============ */
+  .rv{opacity:0; transition:opacity .55s ease, transform .55s ease}
+  /* invisible is not the same as absent: an unrevealed overlay card still sits
+     over the figure at full size and was swallowing clicks meant for the
+     elements underneath it */
+  .rv:not(.on){pointer-events:none}
+  .rv.on{opacity:1}
+  .rv.rise{transform:translateY(10px)} .rv.rise.on{transform:translateY(0)}
+  .drawp{stroke-dasharray:1; stroke-dashoffset:1; transition:stroke-dashoffset 1s ease .1s}
+  .drawp.on{stroke-dashoffset:0}
+  .drawp.d2{transition-delay:.65s} .drawp.d3{transition-delay:1.25s}
+
+  /* ============ boardroom annotations (hand-drawn, three hands) ============ */
+  .boardmain{transition:opacity .5s}
+  .secob[data-scene="8"] .boardmain{opacity:0}
+  .hwp{fill:none; stroke-width:2.4; stroke-opacity:1; stroke-linecap:round; stroke-linejoin:round}
+  .hwp.c1{stroke:var(--crayon)} .hwp.c2{stroke:var(--crayon2)} .hwp.c3{stroke:var(--crayon3)}
+  .hw{font-family:var(--ui); font-weight:600; font-size:17px; letter-spacing:.01em}
+  .hw.c1{fill:var(--crayon)} .hw.c2{fill:var(--crayon2)} .hw.c3{fill:var(--crayon3)}
+
+  /* SVG text utility classes */
+  .t22{font-size:29px} .t18{font-size:23px} .t15{font-size:19.5px} .t13{font-size:17px} .t12{font-size:15.5px} .t11{font-size:14.5px} .t10{font-size:13px} .t9{font-size:12.5px}
+  .fs{font-family:var(--serif)}
+  .b{font-weight:600}
+  .iink{fill:var(--ink)} .isec{fill:var(--sec)} .imut{fill:var(--mut)} .iacc{fill:var(--acc)} .iblue{fill:var(--shared)} .ired{fill:var(--closed)}
+  .it{font-style:italic}
+  .chip{fill:var(--card); stroke:var(--hair2)}
+  .panel{fill:var(--card); stroke:var(--hair2)}
+
+  /* boardroom scene-specific */
+  .sec2[data-scene="3"] .labor, .sec2[data-scene="4"] .labor, .sec2[data-scene="5"] .labor{opacity:.14}
+  .sec2[data-scene="6"] .f2-all{opacity:.12}
+  .f2-all{transition:opacity .5s}
+  .labor{transition:opacity .5s}
+  .meterfill{transform:scaleY(.35); transform-box:fill-box; transform-origin:50% 100%; transition:transform .9s ease}
+  .sec2[data-scene="5"] .meterfill, .sec2[data-scene="6"] .meterfill{transform:scaleY(1)}
+  .m-detail, .m-boiler{transition:opacity .6s}
+  .pulsering{transform-box:fill-box; transform-origin:center; opacity:0}
+  .pulsering.on{animation:ring 1.9s ease-out infinite}
+  @keyframes ring{0%{transform:scale(1); opacity:.55}100%{transform:scale(2.05); opacity:0}}
+
+  /* survey figure (HTML) */
+  .fig-html{position:relative; font-family:var(--ui)}
+  .fig-state{position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; opacity:0; transition:opacity .5s; pointer-events:none}
+  .fig-state.on{opacity:1; pointer-events:auto}
+  .fig-wrap{position:relative; width:100%; max-width:720px; height:78vh; max-height:620px}
+  .tiles{display:flex; gap:14px; justify-content:center; margin-bottom:26px; flex-wrap:wrap}
+  .tile{background:var(--card); border:1px solid var(--hair); border-radius:3px; padding:20px 26px; text-align:center; min-width:120px}
+  .tile .n{font:600 54px/1 var(--serif); color:var(--ink); font-variant-numeric:tabular-nums}
+  .tile .l{font:500 13.5px/1.5 var(--ui); letter-spacing:.08em; text-transform:uppercase; color:var(--mut); margin-top:8px}
+  .tile.hl .n{color:var(--acc)}
+  .fignote{font:400 15.5px/1.7 var(--ui); color:var(--sec); text-align:center; max-width:52ch; margin:0 auto}
+  .charttitle{font:600 18px/1.45 var(--ui); color:var(--ink); margin:0 0 4px}
+  .chartsub{font:400 14.5px/1.5 var(--ui); color:var(--mut); margin:0 0 16px}
+  .legend{display:flex; gap:18px; font:500 14.5px/1 var(--ui); color:var(--sec); margin:14px 0 0; flex-wrap:wrap}
+  .legend span{display:inline-flex; align-items:center; gap:7px}
+  .sw{width:12px; height:12px; border-radius:3px; display:inline-block}
+
+  /* ============ outro ============ */
+  .outro{border-top:1px solid var(--hair); background:var(--surface); padding:14vh 28px 10vh}
+  .outro-inner{max-width:640px; margin:0 auto}
+  .outro h2{font-size:clamp(24px,3vw,32px); margin:0 0 22px; font-weight:600}
+  .outro p{font-size:17px; line-height:1.7; margin:0 0 18px}
+  .verdictline{border-left:3px solid var(--acc); padding:4px 0 4px 18px; font-style:italic; color:var(--sec)}
+  .citebox{background:var(--card); border:1px solid var(--hair); border-radius:3px; padding:20px 24px; font:400 13px/1.75 var(--ui); color:var(--sec); margin:34px 0 0}
+  .citebox .h{font:600 10.5px/1 var(--ui); letter-spacing:.14em; text-transform:uppercase; color:var(--mut); margin:0 0 10px}
+  .foot{font:400 11.5px/1.8 var(--ui); color:var(--mut); margin-top:30px}
+
+  /* ============ band layout (press L to compare) ============
+     full-width figure pinned on top; text scrolls as a horizontal band
+     beneath it, translucent in motion, solid at rest */
+  /* align-items:start is inherited from the grid rule; in flex it stops the
+     children stretching, which left the figure and cards shrink-wrapped */
+  body.layout-band .scrolly{display:flex; flex-direction:column-reverse; align-items:stretch; max-width:none; margin:0}
+  body.layout-band .figure{height:64vh; padding:2vh 2vw; z-index:2; background:var(--paper)}
+  body.layout-band .figure svg, body.layout-band .figure .fig-html{max-width:900px; max-height:60vh}
+  body.layout-band .fig-wrap{height:56vh}
+  body.layout-band .steps{padding:2vh 0 24vh}
+  body.layout-band .step{min-height:42vh; justify-content:center; padding:0 20px}
+  body.layout-band .card{max-width:74ch; width:100%; background:color-mix(in srgb, var(--card) 60%, transparent); backdrop-filter:blur(5px); opacity:.5}
+  body.layout-band .step.active .card{background:var(--card); opacity:1}
+  body.layout-band .chatsec, body.layout-band .ledgersec, body.layout-band .takesec{display:block}
+  body.layout-band .chatsec .figure, body.layout-band .ledgersec .figure, body.layout-band .takesec .figure{height:100vh; padding:0}
+  body.layout-band .chatsec .steps, body.layout-band .ledgersec .steps, body.layout-band .takesec .steps{margin-top:-100vh; padding:0}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition-duration:.01ms !important; animation:none !important}
+    html{scroll-behavior:auto}
+  }
+
+  /* ============ mobile ============ */
+  @media (max-width: 880px){
+    .scrolly{display:flex; flex-direction:column-reverse; align-items:stretch; max-width:none}
+    .figure{position:sticky; top:0; height:52vh; z-index:5; background:var(--paper); border-bottom:1px solid var(--hair); padding:1.5vh 2vw}
+    .figure svg, .figure .fig-html{max-height:49vh}
+    .fig-wrap{height:47vh}
+    .steps{padding:0 14px 10vh}
+    .step{min-height:76vh; padding:0}
+    .card{max-width:none}
+    .tile{padding:12px 16px} .tile .n{font-size:30px}
+    /* the two cinematic sections stay full-bleed on mobile */
+    .scrolly.chatsec, .scrolly.ledgersec, .scrolly.takesec{display:block}
+    .chatsec .figure, .ledgersec .figure, .takesec .figure{height:100vh; border-bottom:0; padding:0}
+    .chatsec .steps, .ledgersec .steps, .takesec .steps{padding:0}
+    .ledgergrid{grid-template-columns:1fr; gap:26px}
+    .ledgerhed{margin-bottom:22px}
+    .lcol ul{gap:13px}
+    .ltxt{font-size:15px} .ltxt .d{display:none}   /* headline claims only; the gloss is desktop-only */
+    .ledgerfoot{font-size:15px; margin-top:26px; padding-top:16px}
+    .overlaycard{padding:26px 24px}
+  }
+
+  /* ============ short-cut additions ============ */
+
+  /* hero: the paper link */
+  .ssrnlink{display:inline-block; margin-top:22px; font:600 13px/1 var(--ui); letter-spacing:.04em;
+            color:var(--acc); text-decoration:none; border:1px solid var(--acc); border-radius:99px; padding:11px 20px;
+            transition:background .25s, color .25s}
+  .ssrnlink:hover{background:var(--acc); color:var(--paper)}
+
+  /* the opening question rises to the top of the screen before it goes */
+  /* the question leaves quickly, and the thread waits for it to clear */
+  /* the question makes exactly two moves: one rise on the first click, held
+     for the next beat, then the exit. Staged half-steps read as jitter. */
+  .bigq{transition:opacity .3s ease, transform .8s cubic-bezier(.33,0,.2,1)}
+  .chatstage.rv{transition:opacity .5s ease .32s, filter .5s ease .32s}
+  .chatsec[data-scene="2"] .bigq,
+  .chatsec[data-scene="3"] .bigq{transform:translate(-50%, calc(-52% - 27vh))}
+  .chatsec:not([data-scene="0"]):not([data-scene="1"]):not([data-scene="2"]):not([data-scene="3"]) .bigq{
+    transform:translate(-50%, calc(-52% - 42vh));
+    transition:opacity .3s ease, transform .55s ease-in}
+
+  .overlaycard.fromleft{transform:translate(calc(-50% - 80px), -48%);
+                        transition:opacity .55s ease, transform .75s cubic-bezier(.4,0,.2,1)}
+  .overlaycard.fromleft.on{transform:translate(-50%, -48%)}
+
+  /* the closing question of the opening scene reads in ink, not accent */
+  .ocq{color:var(--ink)}
+
+  /* ledger: one click per column, but the three land in sequence */
+  .lcol li.rv:nth-child(2){transition-delay:.20s}
+  .lcol li.rv:nth-child(3){transition-delay:.40s}
+  .ltxt{font-size:17px; line-height:1.45}
+
+  /* ============ cards: one at a time ============
+     Ordinary scrollytelling: the card rides the scroll inside its own step —
+     nothing is pinned. What changed from the original is only which cards are
+     visible and how they arrive: no half-visible preview of the next card, an
+     upward flip on arrival, a plain fade on the way out.
+     (An earlier build pinned the card on the activation line; reverted at RT's
+     request because it read as a slideshow rather than a scroll.) */
+  .step{perspective:900px}
+  .card{opacity:0; transform:translateY(20px) rotateX(-62deg); transform-origin:50% 100%;
+        /* leaving: fade only — the tilt is restored after the fade, where it
+           cannot be seen, so the card never flips away from the reader */
+        transition:opacity .42s ease, transform 0s linear .42s, border-color .3s}
+  /* arriving: the flip */
+  .step.active .card{opacity:1; transform:none;
+        transition:opacity .3s ease, transform .52s cubic-bezier(.2,.9,.28,1), border-color .3s}
+  body.layout-band .card{transform:none}
+
+  /* ============ the two-effects stage ============ */
+  .fxsec .figure{padding:3vh 2vw}
+  .fxstage{width:100%; max-width:760px; transition:transform .8s cubic-bezier(.4,0,.2,1), opacity .5s}
+  /* parked centre from the start, so it makes exactly one move: centre -> left */
+  .fxsec:not(.fxsec2) .fxstage{transform:translateX(21%)}
+  .actA[data-scene="1"] .fxstage, .actA[data-scene="2"] .fxstage{opacity:0}
+  .actA:not([data-scene="0"]):not([data-scene="1"]):not([data-scene="2"]):not([data-scene="3"]) .fxstage{transform:translateX(0)}
+  .actA:not([data-scene="1"]):not([data-scene="2"]):not([data-scene="3"]):not([data-scene="4"]):not([data-scene="5"]):not([data-scene="6"]) .fxlead,
+  .actA:not([data-scene="1"]):not([data-scene="2"]):not([data-scene="3"]):not([data-scene="4"]):not([data-scene="5"]):not([data-scene="6"]) .fxline,
+  .actB:not([data-scene="1"]) .fxlead, .actB:not([data-scene="1"]) .fxline{opacity:0}
+  .fxlead{font-family:var(--serif); font-size:clamp(17px,1.95vw,22px); color:var(--sec); margin:0 0 20px; padding-left:12px; transition:opacity .5s}
+  .fxrow{display:grid; grid-template-columns:minmax(0,1fr) 76px minmax(0,1fr); align-items:center; margin-bottom:20px}
+  .fxline{font-family:var(--serif); font-size:clamp(16.5px,1.8vw,21px); line-height:1.35; margin:0;
+          padding:10px 12px; border-radius:4px; transition:background .5s, opacity .5s}
+  .fxline .n{color:var(--mut)}
+  .actA[data-scene="4"] .r1 .fxline, .actA[data-scene="6"] .r1 .fxline,
+  .fxsec2[data-scene="1"] .r1 .fxline{background:var(--closed-wash)}
+  .actA[data-scene="5"] .r2 .fxline, .actA[data-scene="6"] .r2 .fxline,
+  .fxsec2[data-scene="1"] .r2 .fxline{background:var(--shared-wash)}
+  .fxarrow{display:flex; justify-content:center}
+  .fxarrow svg{width:62px; height:22px}
+  .fxname{font:600 clamp(16px,1.85vw,21px)/1.3 var(--ui); margin:0; letter-spacing:.01em;
+          padding:9px 13px; border-radius:4px; justify-self:start;
+          transition:opacity .5s, transform .8s cubic-bezier(.4,0,.2,1)}
+  .fxname.closed{color:var(--closed); background:var(--closed-wash)}
+  .fxname.shared{color:var(--shared); background:var(--shared-wash)}
+  /* 7: the name itself rises into the heading slot, same size, same wash.
+     -145px / -45.5vh measured against the figure box at scene 6. */
+  .actA[data-scene="8"] .fxname.closed,
+  .actA[data-scene="9"] .fxname.closed,
+  .actA[data-scene="10"] .fxname.closed,
+  .actA[data-scene="11"] .fxname.closed,
+  .actA[data-scene="12"] .fxname.closed,
+  .actA[data-scene="13"] .fxname.closed,
+  .actA[data-scene="14"] .fxname.closed{transform:translate(-145px, calc(-45.5vh + 56px))}
+  .actB[data-scene="3"] .fxname.shared,
+  .actB[data-scene="4"] .fxname.shared,
+  .actB[data-scene="5"] .fxname.shared,
+  .actB[data-scene="6"] .fxname.shared,
+  .actB[data-scene="7"] .fxname.shared{transform:translate(-113px, calc(-45.5vh - 28px))}
+
+  /* the effect name pinned as a section heading while its story runs */
+  .secheading{position:absolute; top:4.5vh; left:50%; transform:translateX(-50%); white-space:nowrap;
+              font:600 clamp(16px,1.85vw,21px)/1.3 var(--ui); letter-spacing:.01em;
+              padding:9px 13px; border-radius:4px; margin:0; z-index:3}
+  .secheading.closed{color:var(--closed); background:var(--closed-wash)}
+  .secheading.shared{color:var(--shared); background:var(--shared-wash)}
+
+  /* before a section arrives it holds nothing, so its opening state fades in */
+  [data-scrolly][data-scene="0"] .fxstage,
+  [data-scrolly][data-scene="0"] .ledgerstage,
+  [data-scrolly][data-scene="0"] .boardmain,
+  [data-scrolly][data-scene="0"] .secheading{opacity:0}
+  .secheading{transition:opacity .5s}
+
+  .boardlayer{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+              padding-top:7vh; box-sizing:border-box; pointer-events:none}
+  .boardlayer svg{width:100%; max-width:790px; max-height:94vh}
+  /* the walkthrough board gives way to the comparison panels */
+  .boardmain{transition:opacity .5s}
+  .actA[data-scene="13"] .boardmain, .actA[data-scene="14"] .boardmain{opacity:0}
+  .actB[data-scene="7"] .boardmain{opacity:0}
+
+  /* ============ different kinds of records ============ */
+  .actC:not([data-scene="1"]) .fxstage{opacity:0}
+  /* the originals clear fast, so the flying names are the only pair on screen */
+  .actC:not([data-scene="1"]) .fxstage .fxname{opacity:0; transition:opacity .12s}
+
+  .reclayer{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+            padding:2vh 1vw; box-sizing:border-box; pointer-events:none; transition:opacity .45s}
+  .actC[data-scene="1"] .reclayer{opacity:0}
+  .actC[data-scene="10"] .reclayer, .actC[data-scene="11"] .reclayer, .actC[data-scene="12"] .reclayer{opacity:0}
+  /* the note gutter is padding, so the headings still centre over the rows */
+  .recwrap{width:100%; max-width:740px; padding-right:250px; box-sizing:border-box}
+  .recgroup + .recgroup{margin-top:clamp(24px,4.6vh,54px)}
+  .rechead{opacity:0; width:max-content; margin:0 auto clamp(12px,2.2vh,22px); text-align:center}
+
+  .recrow{position:relative; display:grid; grid-template-columns:minmax(0,1.05fr) 54px minmax(0,1fr);
+          align-items:center; margin-bottom:10px}
+  .recrow:last-child{margin-bottom:0}
+  .rlab{padding:9px 13px; border-radius:4px; text-align:right; transition:background .5s}
+  .rout{padding:9px 13px}
+  .rh{display:block; font:600 clamp(14px,1.5vw,17px)/1.3 var(--ui); color:var(--ink)}
+  .rs{display:block; font:400 clamp(10.5px,1.05vw,12.5px)/1.45 var(--ui); color:var(--mut); margin-top:4px}
+  .rarrow{display:flex; justify-content:center}
+  .rarrow svg{width:46px; height:17px}
+  .recrow.tint-closed .rlab{background:var(--closed-wash)}
+  .recrow.tint-shared .rlab{background:var(--shared-wash)}
+  .recrow.tint-none  .rlab{background:var(--surface)}
+  /* the verdict, not the label, carries the colour */
+  .rout.weak .rh{color:var(--sec)}
+  .rout.hot  .rh{color:var(--closed)}
+  .rout.blue .rh{color:var(--shared)}
+
+  /* the arrow rides above the note, with the whole sweep visible — beside the
+     text it was only as long as the padding and read as cut off */
+  .recnote{position:absolute; left:100%; top:50%; width:238px; margin-left:8px;
+           transform:translateY(-50%) rotate(-1.5deg);
+           font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive;
+           font-size:12.5px; line-height:1.5; color:var(--crayon)}
+  .recnote svg{display:block; width:104px; height:26px; margin:0 0 3px 2px}
+  .recnote .hwp{stroke-width:2.6}
+
+  /* ============ the fork ============
+     At the beat where both effects are lit, the two names become the choice:
+     click one to open its story, or keep scrolling straight to the taxonomy.
+     The strands are hidden from JS, not from CSS, so with scripting off the
+     page is simply the old linear read. */
+  .fxname[data-fork]{pointer-events:none}
+  .actA[data-scene="6"] .fxname[data-fork].on{pointer-events:auto; cursor:pointer;
+        box-shadow:inset 0 0 0 1px color-mix(in srgb, currentColor 45%, transparent)}
+  .actA[data-scene="6"] .fxname[data-fork].on:hover,
+  .actA[data-scene="6"] .fxname[data-fork].on:focus-visible{
+        box-shadow:inset 0 0 0 2px currentColor; outline:none}
+  .fxname.forkdone::after{content:' ✓'; opacity:.6; font-weight:400}
+  .forkhint{margin:32px 0 0; padding-left:12px; font:500 23px/1.45 var(--ui); color:var(--sec)}
+  /* the breathing lives on an inner span, so it never fights the .rv fade-in */
+  .forkhint.on span{display:inline-block; animation:breathe 2.8s ease-in-out infinite}
+  @keyframes breathe{0%,100%{opacity:.5} 50%{opacity:1}}
+  .retbtn{font:600 11.5px/1 var(--ui); letter-spacing:.03em; color:var(--acc); background:none;
+          border:1px solid color-mix(in srgb, var(--acc) 45%, transparent); border-radius:99px;
+          padding:8px 15px; cursor:pointer; transition:background .25s, color .25s, border-color .25s}
+  .retbtn:hover{background:var(--acc); border-color:var(--acc); color:var(--paper)}
+  /* one per beat, shown only on the beat you are on, so the column never
+     stacks up a column of buttons */
+  .backbar{margin:0 0 13px; opacity:0; transition:opacity .3s}
+  .step.active .backbar{opacity:1}
+  .step.hasback{flex-direction:column; align-items:flex-start; justify-content:center}
+
+  /* ============ the survey side story ============ */
+  /* this strand is parked immediately before the outro, so it needs a deeper
+     run-out: without it the outro shows through in the moment before the
+     reader is returned to the card that offered the survey */
+  .actS .steps{padding-bottom:135vh}
+  .svlayer{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+           padding:2vh 1vw; box-sizing:border-box}
+  .svstate{position:absolute; width:100%; max-width:700px; display:flex; flex-direction:column;
+           align-items:center; gap:22px}
+  .svrow{display:flex; gap:16px; justify-content:center; flex-wrap:wrap}
+  .svstat{background:var(--card); border:1px solid var(--hair); border-radius:3px;
+          padding:20px 26px; text-align:center; min-width:150px}
+  .svstat .n{display:block; font:600 46px/1 var(--serif); color:var(--ink); font-variant-numeric:tabular-nums}
+  .svstat .l{display:block; font:500 12px/1.5 var(--ui); letter-spacing:.07em; text-transform:uppercase;
+             color:var(--mut); margin-top:9px}
+  .svstat.hl .n{color:var(--acc)}
+  .svbars{width:100%; display:flex; flex-direction:column; gap:15px}
+  .svbar{display:grid; grid-template-columns:minmax(0,1fr) 150px 92px; align-items:center; gap:14px}
+  .svbar .lab{font:400 14px/1.4 var(--ui); color:var(--ink); text-align:right}
+  .svbar .lab b{font-weight:600}
+  .svbar .tr{display:block; height:12px; border-radius:99px; background:var(--surface);
+             box-shadow:inset 0 0 0 1px var(--hair)}
+  .svbar .tr i{display:block; height:100%; border-radius:99px; background:var(--sec)}
+  .svbar .tr.s i{background:var(--shared)}
+  .svbar .tr.o i{background:var(--closed)}
+  .svbar .v{font:600 13px/1.3 var(--ui); color:var(--sec)}
+  .svattr{display:block; margin-top:10px; font:500 11.5px/1.4 var(--ui); letter-spacing:.06em;
+          text-transform:uppercase; color:var(--mut)}
+  .svquote{font-family:var(--serif); font-size:16.5px; line-height:1.62; color:var(--ink);
+           border-left:3px solid var(--hair2); padding-left:20px; margin:0; max-width:640px}
+  .svsplit{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:18px; width:100%}
+  .svside{font-family:var(--serif); font-size:15.5px; line-height:1.55; color:var(--sec);
+          background:var(--card); border:1px solid var(--hair); border-radius:3px; padding:16px 18px}
+  .svvs{font:500 12px/1 var(--ui); letter-spacing:.12em; text-transform:uppercase; color:var(--mut)}
+
+  /* the invitation inside a card, same breathing as the fork */
+  .cuewrap{margin-top:14px}
+  /* a deeper breath than the fork hint: these invitations sit inside a card or
+     an annotation, so they need more to be noticed */
+  .clickcue{font:600 15px/1.45 var(--ui); color:var(--acc); cursor:pointer;
+            border-bottom:1px solid color-mix(in srgb, var(--acc) 40%, transparent);
+            display:inline-block; transform-origin:left center;
+            animation:breathe2 2.4s ease-in-out infinite}
+  .clickcue:hover{border-bottom-color:var(--acc); animation-play-state:paused; opacity:1}
+  @keyframes breathe2{0%,100%{opacity:.3; transform:scale(1)} 50%{opacity:1; transform:scale(1.04)}}
+
+  /* ============ the two explore panels ============ */
+  .rword{padding:1px 4px; border-radius:3px; transition:background .5s, color .5s}
+  .actD[data-scene="11"] .rword{background:var(--closed-wash); color:var(--closed); font-weight:600}
+  .exnote{position:absolute; width:262px; font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive;
+          color:var(--crayon4); transform:rotate(-1.5deg)}
+  .exnote p{margin:0 0 9px; font-size:14.5px; line-height:1.5}
+  .exnote svg{display:block; width:112px; height:30px; margin:0 0 4px 2px}
+  .exnote .hwp{stroke-width:2.6; stroke:var(--crayon4)}
+  .exnote .clickcue{font-family:var(--ui); font-size:15px}
+  .ex-doc{left:-248px; top:25%}
+  .ex-res{left:71%; top:56%; width:250px}
+  .actD.panel-open .cnbuild{opacity:.18; transition:opacity .4s}
+  .expanel{position:fixed; top:50%; transform:translateY(-50%); width:min(430px, 40vw); z-index:20;
+           background:var(--card); border:1px solid var(--hair2); border-radius:4px;
+           box-shadow:0 24px 70px rgba(0,0,0,.22); padding:28px 32px 18px}
+  .expanel.side-left{left:3vw}
+  .expanel.side-right{right:3vw}
+  .expanel h3{font:600 17.5px/1.35 var(--ui); color:var(--ink); margin:0 0 16px; padding-right:26px}
+  /* pages, not a scrollbar: the box keeps one height and the text is flipped */
+  .expages{position:relative; min-height:184px}
+  .expage{display:none}
+  .expage.on{display:block}
+  .expage p{font-family:var(--serif); font-size:15.5px; line-height:1.62; color:var(--ink); margin:0}
+  .expage b{font-weight:600}
+  .expage .expcite{font:400 12px/1.6 var(--ui); color:var(--mut); margin-top:12px}
+  .expage .expsub{font-size:14.5px; line-height:1.55; margin-top:11px; padding-left:14px;
+                  border-left:2px solid var(--hair2)}
+  .expnav{display:flex; align-items:center; justify-content:space-between; gap:12px;
+          border-top:1px solid var(--hair); margin-top:16px; padding-top:12px}
+  .expprev, .expnext{width:30px; height:30px; border:1px solid var(--hair2); background:none;
+                     border-radius:50%; color:var(--sec); font-size:17px; line-height:1; cursor:pointer;
+                     transition:border-color .2s, color .2s}
+  .expprev:hover:not(:disabled), .expnext:hover:not(:disabled){border-color:var(--acc); color:var(--acc)}
+  .expprev:disabled, .expnext:disabled{opacity:.3; cursor:default}
+  .expdots{display:flex; gap:7px}
+  .expdots i{width:6px; height:6px; border-radius:50%; background:var(--hair2); display:block;
+             transition:background .2s}
+  .expdots i.on{background:var(--acc)}
+  .expclose{position:absolute; top:10px; right:12px; width:28px; height:28px; line-height:1;
+            font-size:21px; color:var(--mut); background:none; border:0; cursor:pointer; border-radius:50%}
+  .expclose:hover{background:var(--surface); color:var(--ink)}
+
+  /* ============ the takeaway ============ */
+  .takelayer{width:min(820px, calc(100% - 48px)); margin:0 auto}
+  .takehead{margin:0 0 24px 50px; font:600 12px/1 var(--ui); letter-spacing:.2em;
+            text-transform:uppercase; color:var(--acc)}
+  .takepoint{display:grid; grid-template-columns:44px minmax(0,1fr); gap:6px; align-items:start;
+             margin-bottom:26px}
+  .takepoint .hand{font-size:25px; line-height:1.15; color:var(--crayon); text-align:center;
+                   transform:rotate(-6deg)}
+  .takepoint p{margin:0; font-family:var(--serif); font-size:clamp(16px,1.75vw,19.5px); line-height:1.6;
+               color:var(--ink)}
+  .takelink{margin:44px 0 0; text-align:center}
+  .takelink a{font:600 17px/1.4 var(--ui); color:var(--acc); text-decoration:none;
+              border-bottom:1px solid color-mix(in srgb, var(--acc) 40%, transparent);
+              display:inline-block; transform-origin:center;
+              animation:breathe2 2.4s ease-in-out infinite}
+  .takelink a:hover{border-bottom-color:var(--acc); animation-play-state:paused; opacity:1}
+  .takeagain{margin:16px 0 0; text-align:center}
+  .startover{font:500 13.5px/1.4 var(--ui); color:var(--mut); background:none; border:0;
+             cursor:pointer; padding:6px 4px; border-bottom:1px solid transparent;
+             transition:color .25s, border-color .25s}
+  .startover:hover{color:var(--ink); border-bottom-color:var(--hair2)}
+
+  /* ============ the choice, offered again ============
+     A side story ends by putting the choice back on screen as an ordinary
+     beat. Nothing jumps: the reader scrolls into it. (An earlier version
+     scrolled the reader back automatically and fought the momentum of the
+     flick that triggered it.) */
+  .againlayer{position:absolute; inset:0; display:flex; flex-direction:column;
+              align-items:center; justify-content:center; gap:20px;
+              padding:2vh 1vw; box-sizing:border-box; pointer-events:none}
+  .againrow{display:flex; gap:20px; align-items:center; flex-wrap:wrap; justify-content:center}
+  .againlayer .fxname{justify-self:auto}
+  .againlayer.on .fxname[data-fork]{pointer-events:auto; cursor:pointer;
+        box-shadow:inset 0 0 0 1px color-mix(in srgb, currentColor 45%, transparent)}
+  .againlayer.on .fxname[data-fork]:hover,
+  .againlayer.on .fxname[data-fork]:focus-visible{box-shadow:inset 0 0 0 2px currentColor; outline:none}
+  .againhint{margin:0; font:500 19px/1.5 var(--ui); color:var(--sec); text-align:center}
+  .againhint span{display:inline-block; animation:breathe 2.8s ease-in-out infinite}
+  .againlayer.on .retbtn{pointer-events:auto}
+  .actA[data-scene="15"] .fxstage, .actB[data-scene="8"] .fxstage{opacity:0}
+
+  /* ============ the statute ============ */
+  .stlayer{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+           padding:2vh 1vw; box-sizing:border-box; transition:opacity .5s}
+  .actD:not([data-scene="1"]):not([data-scene="2"]):not([data-scene="3"]):not([data-scene="4"]):not([data-scene="5"]) .stlayer{opacity:0}
+  /* the question sits over the statute, which steps back behind it */
+  .actD[data-scene="5"] .stlayer{opacity:.32; filter:blur(2px)}
+  .actD .stlayer{transition:opacity .5s, filter .5s}
+  .stwrap{width:100%; max-width:770px}
+  .sthead, .stbody{display:grid; grid-template-columns:minmax(0,1fr) 136px 232px}
+  .sthead > div{font:600 11px/1.3 var(--ui); letter-spacing:.1em; text-transform:uppercase; color:var(--mut); padding:0 12px 9px}
+  .stbody{border-top:1px solid var(--hair2)}
+  .stcell{grid-column:1; padding:12px 12px; border-bottom:1px solid var(--hair);
+          font:400 14.5px/1.4 var(--ui); color:var(--ink)}
+  .stcat{grid-column:2; display:flex; align-items:center; justify-content:center; text-align:center;
+         border-left:1px solid var(--hair2); border-bottom:1px solid var(--hair2);
+         background:var(--surface); font:600 15px/1.35 var(--ui); color:var(--ink); padding:8px 12px}
+  .stcat.core{grid-row:1 / span 2}
+  .stcat.noncore{grid-row:3 / span 3}
+  .stnote{grid-column:3; align-self:center; padding-left:14px;
+          font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive;
+          font-size:12.5px; line-height:1.5; color:var(--crayon); transform:rotate(-1.5deg)}
+  .stnote.core{grid-row:1 / span 2}
+  .stnote.noncore{grid-row:3 / span 3}
+  .stnote svg{display:block; width:104px; height:26px; margin:0 0 3px 2px}
+  .stnote .hwp{stroke-width:2.6}
+
+  /* the two words leave the annotation and become the subject */
+  .cnlayer{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+           padding:2vh 1vw; box-sizing:border-box; pointer-events:none}
+  .cnwords{margin:0; white-space:nowrap; opacity:0;
+           font:600 clamp(22px,2.7vw,32px)/1.3 var(--ui); color:var(--ink)}
+  /* plain phrase spacing until the two words become chips */
+  .cw{padding:5px 2px; border-radius:4px;
+      transition:background .55s ease, color .55s ease, padding .45s ease}
+  .actD[data-scene="8"] .cw-c{color:var(--closed); background:var(--closed-wash); padding:5px 11px}
+  .actD[data-scene="8"] .cw-n{color:var(--shared); background:var(--shared-wash); padding:5px 11px}
+  .actD:not([data-scene="6"]):not([data-scene="7"]):not([data-scene="8"]) .cnwords{opacity:0 !important}
+
+  .cnbuild{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+           padding:2vh 1vw; box-sizing:border-box; pointer-events:none}
+  .cnwrap{width:100%; max-width:720px}
+  .cngroup + .cngroup{margin-top:clamp(24px,4.6vh,54px)}
+  .cnhead{margin-left:auto; margin-right:auto}
+  /* the card's own inline highlights, same two colours as the effects */
+  .hl-s{color:var(--shared); background:var(--shared-wash); padding:1px 5px; border-radius:3px}
+  .hl-o{color:var(--closed); background:var(--closed-wash); padding:1px 5px; border-radius:3px}
+
+  /* ============ the implication table ============ */
+  .implayer{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:2vh 1vw; box-sizing:border-box; opacity:0}
+  .actC[data-scene="10"] .implayer, .actC[data-scene="11"] .implayer{opacity:1}
+  .implayer{transition:opacity .5s}   /* the table gives way to the closing question */
+  /* the table's chrome waits for the words to land */
+  .implayer .imphead, .implayer .impband{opacity:0; transition:opacity .6s}
+  .implayer.composed .imphead, .implayer.composed .impband{opacity:1}
+  .implayer .rt .w{visibility:hidden}
+  .implayer.composed .rt .w{visibility:visible}
+  .impnote{position:absolute; top:calc(100% + 12px); right:8px; width:250px;
+           transform:rotate(-1.5deg);
+           font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive;
+           font-size:12.5px; line-height:1.5; color:var(--crayon)}
+  /* the arrow sits right within the note, so its tip lands on the verdict cell */
+  .impnote svg{display:block; width:104px; height:30px; margin:0 0 2px 88px}
+  .impnote .hwp{stroke-width:2.6}
+  .twirl{position:absolute; z-index:8; margin:0; white-space:nowrap; pointer-events:none;
+         font-family:var(--serif); font-size:16.5px; font-weight:600; color:var(--ink); transition:opacity .5s}
+  .impwrap{position:relative; width:100%; max-width:790px}
+  .imphead, .impband{display:grid; grid-template-columns:.95fr 1.75fr 1.05fr; align-items:center; gap:0}
+  .imphead > div{font:600 11px/1.3 var(--ui); letter-spacing:.1em; text-transform:uppercase; color:var(--mut); padding:0 14px 10px}
+  .impband{padding:18px 0; border-radius:4px; margin-bottom:8px; cursor:default; transition:filter .2s, box-shadow .2s}
+  .impband > div{padding:0 14px; font:400 14.5px/1.4 var(--ui); color:var(--ink)}
+  .impband .rt{font-family:var(--serif); font-size:16.5px; font-weight:600}
+  .impband .mut{color:var(--mut)}
+  .impband .ex{font-style:italic; color:var(--sec); font-size:13.5px}
+  .impband .vd{font-weight:600}
+  .impband .vd.n{color:var(--sec)} .impband .vd.a{color:var(--good)} .impband .vd.r{color:var(--closed)}
+  /* shade escalates with what the two effects, taken together, favour */
+  .impband.b1{background:var(--surface); box-shadow:inset 0 0 0 1px var(--hair)}
+  .impband.b2{background:var(--good-wash)}
+  .impband.b3{background:var(--closed-wash)}
+  .impband.b4{background:color-mix(in srgb, var(--closed-wash) 55%, var(--closed) 12%)}
+  .impband:hover{filter:brightness(.98) saturate(1.4)}
+  /* the explanation opens beside the table, not underneath it: a tall card on
+     the right, vertically centred, rather than an extra row */
+  #imppop{top:50%; bottom:auto; left:auto; right:6px; transform:translateY(-50%);
+          width:min(300px, 40%); min-height:172px; display:flex; align-items:center}
+
+  .taxlayer{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:2vh 1vw; box-sizing:border-box}
+  .taxwrap{position:relative; width:100%; max-width:780px}
+  .taxhead{display:grid; grid-template-columns:118px 1fr 1fr; gap:0}
+  .taxhead .h{display:block; font:600 16px/1.3 var(--ui); color:var(--ink)}
+  .taxhead .sub{display:block; font:italic 400 11.5px/1.4 var(--ui); color:var(--mut); margin-top:2px}
+  .taxhead > div{text-align:center; padding:0 10px 10px}
+  .taxbody{display:grid; grid-template-columns:118px 1fr 1fr; grid-auto-rows:1fr; border:1px solid var(--hair2); border-radius:4px; overflow:hidden}
+  .taxrowlab{display:flex; flex-direction:column; justify-content:center; align-items:flex-end;
+             padding:0 14px 0 0; text-align:right; background:var(--paper)}
+  .taxrowlab .h{font:600 16px/1.3 var(--ui); color:var(--ink)}
+  .taxrowlab .sub{font:italic 400 11px/1.4 var(--ui); color:var(--mut); margin-top:2px}
+  .taxcell{padding:20px 18px; text-align:center; border-left:1px solid var(--hair2); border-top:1px solid var(--hair2);
+           cursor:default; transition:filter .2s, box-shadow .2s}
+  .taxbody > .taxcell:nth-of-type(-n+2){border-top:0}
+  .taxcell:hover{filter:saturate(1.5) brightness(.985); box-shadow:inset 0 0 0 2px currentColor}
+  /* an effect present is stated in its own colour; absent is muted */
+  .taxcell .eff{font:500 15px/1.45 var(--ui); margin:0 0 2px}
+  .taxcell .eff.off{color:var(--mut)}
+  .taxcell .eff.on-s{color:var(--shared); font-weight:600}
+  .taxcell .eff.on-o{color:var(--closed); font-weight:600}
+  .taxcell .ex{font:italic 400 12px/1.5 var(--ui); color:var(--sec); margin:12px 0 0}
+  /* cell tint = which effects live there */
+  .taxcell.qnw{background:var(--shared-wash); color:var(--shared)}
+  .taxcell.qse{background:var(--closed-wash); color:var(--closed)}
+  .taxcell.qne{background:linear-gradient(135deg, var(--shared-wash), var(--closed-wash)); color:var(--closed)}
+  .taxcell.qsw{background:var(--surface); color:var(--hair2)}
+  .taxpop{position:absolute; left:6%; right:6%; z-index:6; opacity:0; pointer-events:none;
+          background:color-mix(in srgb, var(--card) 96%, transparent); border:1px solid var(--hair2);
+          border-left:3px solid var(--acc); border-radius:4px; padding:18px 22px;
+          box-shadow:0 16px 44px rgba(0,0,0,.20); transition:opacity .18s ease}
+  .taxpop p{font-family:var(--serif); font-size:15.5px; line-height:1.55; margin:0; color:var(--ink)}
+  .taxpop.on{opacity:1}
+  .taxpop.at-top{top:11%}      /* shown when a bottom-row cell is hovered */
+  .taxpop.at-bottom{top:54%}   /* shown when a top-row cell is hovered */
+  .taxpop.o{border-left-color:var(--closed)} .taxpop.s{border-left-color:var(--shared)}
+  @media (max-width: 880px){
+    .taxhead, .taxbody{grid-template-columns:70px 1fr 1fr}
+    .taxcell{padding:12px 10px} .taxcell .eff{font-size:12.5px} .taxcell .ex{font-size:10.5px}
+    /* mobile keeps the card in flow: the figure holds the top of the screen
+       and the activation line sits at 78vh, so there is nowhere to pin it */
+    .card{opacity:0; transform:translateY(18px); transition:opacity .4s ease, transform .5s ease}
+    .step.active .card{opacity:1; transform:none}
+    /* no room for a note gutter: the notes sit under their row */
+    .recwrap{padding-right:0}
+    .recrow{grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr)}
+    .rlab, .rout{padding:6px 8px}
+    .rs{display:none}
+    .rarrow svg{width:30px}
+    .recnote{position:static; width:auto; margin:6px 0 0; padding-left:34px; transform:rotate(-1deg); font-size:12px}
+    .recnote svg{top:2px; margin-top:0; width:28px; height:20px}
+  }
+
+  @media (max-width: 880px){
+    .fxrow{grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr)}
+    .fxsec .fxstage{transform:none}
+    .fxsec .fxname{transform:none}
+    .secheading{top:1.5vh}
+  }
+</style>
+
+<div class="greybox-pill">SHORT CUT &middot; v0.1</div>
+<div class="presenter-hud" id="phud">presenter</div>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="hero-inner">
+    <p class="eyebrow">A visual companion to the Article</p>
+    <h1>The Chilling Effects of Board&nbsp;Transparency</h1>
+    <p class="byline">Roberto Tallarita &middot; Harvard Law School</p>
+    <p class="meta">Working draft of July 31, 2026</p>
+    <!-- SSRN URL still to be supplied -->
+    <p><a class="ssrnlink" href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7248478" target="_blank" rel="noopener">Read the full paper on SSRN &#8594;</a></p>
+  </div>
+  <div class="scrollcue">Scroll &#8595;</div>
+</header>
+
+<!-- ================= 1. THE QUESTION, THEN THE TEXTS ================= -->
+<section class="scrolly chatsec" data-scrolly data-scene="1">
+  <div class="figure" aria-label="The opening question, then two directors of a public company texting each other">
+    <div class="bigq rv" data-show="1-3">
+      <p>Can transparency reduce the quality of corporate governance?</p>
+    </div>
+    <div class="chatstage rv" data-show="4+">
+      <p class="chatexpl">Two directors of a public company are texting</p>
+      <div class="thread">
+        <div class="who out rv" data-show="4+">Elena</div>
+        <div class="bub out rv rise" data-show="4+">Tuesday we&rsquo;ll vote on the buy-out offer</div>
+        <div class="who in rv" data-show="5+">Marcus</div>
+        <div class="bub in rv rise" data-show="5+">What do you think of the new projections?</div>
+        <div class="bub out rv rise" data-show="6+">I don&rsquo;t believe them. Should we speak with Kathy and Aneel before Tuesday?</div>
+      </div>
+    </div>
+    <div class="overlaycard rv" data-show="7">
+      <p class="ocq">Should shareholders have access to these texts?</p>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="step" data-step="1"></div>
+    <div class="step" data-step="2"></div>
+    <div class="step" data-step="3"></div>
+    <div class="step" data-step="4"></div>
+    <div class="step" data-step="5"></div>
+    <div class="step" data-step="6"></div>
+    <div class="step" data-step="7"></div>
+  </div>
+</section>
+
+<!-- ================= 2. THE LEDGER ================= -->
+<section class="scrolly ledgersec" data-scrolly data-scene="1">
+  <div class="figure" aria-label="The familiar case for and against board transparency">
+    <div class="ledgerstage">
+      <p class="ledgerhed rv" data-show="1+">The familiar ledger</p>
+      <div class="ledgergrid">
+        <div class="lcol for">
+          <p class="lhead rv" data-show="2+">The case for transparency</p>
+          <div class="lrule rv" data-show="2+"></div>
+          <ul>
+            <li class="rv rise" data-show="2+"><span class="mk">&#10003;</span><span class="ltxt">Screening<span class="d">Shareholder inspection lets a court sort good and bad lawsuits.</span></span></li>
+            <li class="rv rise" data-show="2+"><span class="mk">&#10003;</span><span class="ltxt">Deterrence and accountability<span class="d">Disclosure deters misconduct and holds directors accountable.</span></span></li>
+            <li class="rv rise" data-show="2+"><span class="mk">&#10003;</span><span class="ltxt">The engine of oversight liability<span class="d">Shareholder inspections drive <em>Caremark</em> lawsuits for compliance violations resulting in social harm.</span></span></li>
+          </ul>
+        </div>
+        <div class="lcol against">
+          <p class="lhead rv" data-show="3+">The case against</p>
+          <div class="lrule rv" data-show="3+"></div>
+          <ul>
+            <li class="rv rise" data-show="3+"><span class="mk">&#10007;</span><span class="ltxt">Litigation and administrative burden<span class="d">Companies spend significant money and energy handling shareholders&rsquo; demands for internal records.</span></span></li>
+            <li class="rv rise" data-show="3+"><span class="mk">&#10007;</span><span class="ltxt">Leakage<span class="d">Confidential business information can reach competitors.</span></span></li>
+            <li class="rv rise" data-show="3+"><span class="mk">&#10007;</span><span class="ltxt">Strike suits<span class="d">Companies settle even meritless demands.</span></span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="step" data-step="1"></div>
+    <div class="step" data-step="2"></div>
+    <div class="step" data-step="3"></div>
+  </div>
+</section>
+
+<!-- ================= 3. THE TWO EFFECTS ================= -->
+<section class="scrolly fxsec actA" data-scrolly data-scene="1">
+  <div class="steps">
+    <div class="step" data-step="1"></div>
+    <div class="step" data-step="2"></div>
+    <div class="step" data-step="3"></div>
+    <div class="step" data-step="4"><div class="card">
+      <p>If directors expect their internal communications to be disclosed, they might self-censor their dissent against management.</p>
+    </div></div>
+    <div class="step" data-step="5"><div class="card">
+      <p>If management expects books and records to be disclosed, they might curate the content to remove or soften evidence of dissent or wrongdoing.</p>
+    </div></div>
+    <div class="step" data-step="6"></div>
+    <div class="step br-o" data-step="7"></div>
+    <div class="step br-o" data-step="8"></div>
+
+    <div class="step br-o" data-step="9"><div class="card">
+      <p>Suppose one outside director, Elena, is skeptical of a management proposal. She has a fiduciary duty to act on her belief, but opposing management could hurt her career.</p>
+    </div></div>
+    <div class="step br-o" data-step="10"><div class="card">
+      <p>Directors who monitor management aggressively fare worse in the market for board seats. Those who ingratiate themselves with the CEO fare better.</p>
+      <p class="cite">Westphal &amp; Stern (2007); Bebchuk &amp; Fried, Pay Without Performance 36 (2004).</p>
+    </div></div>
+    <div class="step br-o" data-step="11"><div class="card">
+      <p>It is cheaper for her to build a coalition behind the scenes.</p>
+    </div></div>
+    <div class="step br-o" data-step="12"><div class="card">
+      <p>One conversation at a time.</p>
+    </div></div>
+    <div class="step br-o" data-step="13"><div class="card">
+      <p>But opposition-building is cheaper only so long as management cannot watch it happen.</p>
+    </div></div>
+    <div class="step br-o" data-step="14"><div class="card">
+      <p>Disclosure makes opposition-building transparent and therefore more difficult. This is a cost for corporate governance.</p>
+    </div></div>
+    <div class="step br-o" data-step="15"></div>
+  </div>
+  <div class="figure" aria-label="Transparency changes two things: how a board deliberates, and how the deliberation is written down">
+    <div class="overlaycard rv" data-show="1">
+      <p>In the paper, I study two underexamined effects of the transparency of corporate records.</p>
+    </div>
+    <div class="overlaycard fromleft rv" data-show="2">
+      <p>Economists and political scientists have shown that anticipated disclosure can chill candid deliberation, induce conformity, and push real discussion to informal channels. Corporate law should reckon with these findings.</p>
+    </div>
+    <div class="fxstage">
+      <p class="fxlead">Transparency can change</p>
+      <div class="fxrow r1">
+        <p class="fxline"><span class="n">(1)</span> the way a board deliberates</p>
+        <div class="fxarrow rv" data-show="4,6"><svg viewBox="0 0 70 24" aria-hidden="true"><path d="M2 12 H54" stroke="var(--closed)" stroke-width="2"/><path d="M48 5 L58 12 L48 19" fill="none" stroke="var(--closed)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <p class="fxname closed rv" data-show="4,6,7+" data-fork="o" role="button" tabindex="0">Opposition-chilling</p>
+      </div>
+      <div class="fxrow r2">
+        <p class="fxline"><span class="n">(2)</span> how the deliberation is written down</p>
+        <div class="fxarrow rv" data-show="5,6"><svg viewBox="0 0 70 24" aria-hidden="true"><path d="M2 12 H54" stroke="var(--shared)" stroke-width="2"/><path d="M48 5 L58 12 L48 19" fill="none" stroke="var(--shared)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <p class="fxname shared rv" data-show="5,6" data-fork="s" role="button" tabindex="0">Sanitization</p>
+      </div>
+      <p class="forkhint rv" data-show="6"><span>Click an effect to follow its story &mdash; or keep scrolling</span></p>
+    </div>
+    <div class="boardlayer rv" data-show="9-14">
+<svg viewBox="40 125 750 500">
+    <defs>
+      <g id="pers"><circle cx="0" cy="0" r="10"/><path d="M-15 21 a15 12 0 0 1 30 0"/></g>
+      <filter id="rough2" x="-12%" y="-12%" width="124%" height="124%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" result="n2"/>
+        <feDisplacementMap in="SourceGraphic" in2="n2" scale="5"/>
+      </filter>
+      <!-- the room itself, reused at full size for the walkthrough and at 55% for the
+           two comparison panels in the last scene -->
+      <g id="board">
+        <ellipse cx="460" cy="352" rx="212" ry="104" fill="var(--surface)" stroke="var(--hair2)"/>
+        <g transform="translate(460,214) scale(1.15)">
+          <path d="M-12 -15 L-12 -27 L-6 -20 L0 -29 L6 -20 L12 -27 L12 -15 Z" fill="#cfa85e"/>
+          <use href="#pers" fill="var(--closed-wash)" stroke="var(--closed)" stroke-width="1.7"/>
+        </g>
+        <use href="#pers" transform="translate(317,239)" fill="var(--closed-wash)" stroke="var(--closed)" stroke-width="1.6"/>
+        <use href="#pers" transform="translate(603,239)" fill="var(--closed-wash)" stroke="var(--closed)" stroke-width="1.6"/>
+        <use href="#pers" transform="translate(219,316)" fill="var(--card)" stroke="var(--sec)" stroke-width="1.6"/>
+        <use href="#pers" transform="translate(233,410)" fill="var(--card)" stroke="var(--sec)" stroke-width="1.6"/>
+        <use href="#pers" transform="translate(354,477)" fill="var(--card)" stroke="var(--sec)" stroke-width="1.6"/>
+        <use href="#pers" transform="translate(566,477)" fill="var(--card)" stroke="var(--sec)" stroke-width="1.6"/>
+        <use href="#pers" transform="translate(687,410)" fill="var(--card)" stroke="var(--sec)" stroke-width="1.6"/>
+        <use href="#pers" transform="translate(701,316)" fill="var(--card)" stroke="var(--sec)" stroke-width="1.6"/>
+      </g>
+    </defs>
+
+    <g class="boardmain">
+    <use href="#board"/>
+    <text x="460" y="150" text-anchor="middle" class="t11 b ired" style="letter-spacing:.1em">MANAGEMENT</text>
+    <text x="416" y="220" text-anchor="end" class="t10 imut">CEO</text>
+    <text x="112" y="316" text-anchor="middle" class="t11 imut">outside</text>
+    <text x="112" y="332" text-anchor="middle" class="t11 imut">directors</text>
+    <use href="#pers" transform="translate(354,477)" fill="var(--acc)" stroke="var(--acc)" stroke-width="1.6"/>
+    <text x="566" y="519" text-anchor="middle" class="t10 imut">Marcus</text>
+
+    <g class="rv" data-show="11+">
+      <use href="#pers" transform="translate(566,477)" fill="var(--crayon3)" fill-opacity=".24" stroke="var(--crayon3)" stroke-width="1.8"/>
+    </g>
+    <g class="rv" data-show="12+">
+      <use href="#pers" transform="translate(233,410)" fill="var(--crayon3)" fill-opacity=".24" stroke="var(--crayon3)" stroke-width="1.8"/>
+      <use href="#pers" transform="translate(219,316)" fill="var(--crayon3)" fill-opacity=".24" stroke="var(--crayon3)" stroke-width="1.8"/>
+      <use href="#pers" transform="translate(687,410)" fill="var(--crayon3)" fill-opacity=".24" stroke="var(--crayon3)" stroke-width="1.8"/>
+      <text x="233" y="452" text-anchor="middle" class="t10 imut">Kathy</text>
+      <text x="219" y="296" text-anchor="middle" class="t10 imut">Priya</text>
+      <text x="687" y="392" text-anchor="middle" class="t10 imut">Aneel</text>
+    </g>
+
+    <g class="rv" data-show="9-12">
+      <text x="124" y="592" class="hw c1">Elena&rsquo;s skeptical</text>
+      <g>
+        <path class="hwp c1 drawp" data-show="9-12" pathLength="1" d="M256 584 C 300 586, 322 560, 344 516"/>
+        <path class="hwp c1 drawp d2" data-show="9-12" pathLength="1" d="M330 525 L 344 516 L 346 533"/>
+      </g>
+    </g>
+
+    <g class="rv" data-show="10">
+      <text x="372" y="306" class="hw c2">Dissent</text>
+      <g>
+        <path class="hwp c2 drawp" data-show="10" pathLength="1" d="M372 452 C 424 404, 448 330, 452 252"/>
+        <path class="hwp c2 drawp d2" data-show="10" pathLength="1" d="M441 262 L 452 249 L 463 261"/>
+      </g>
+    </g>
+
+    <g class="rv" data-show="11+">
+      <text x="392" y="548" class="hw c3">Build a coalition</text>
+      <g>
+        <path class="hwp c3 drawp" data-show="11+" pathLength="1" d="M372 490 C 420 508, 480 508, 537 488"/>
+        <path class="hwp c3 drawp d2" data-show="11+" pathLength="1" d="M520 484 L 537 488 L 526 501"/>
+      </g>
+    </g>
+    <g class="rv" data-show="12+">
+      <g>
+        <path class="hwp c3 drawp" data-show="12+" pathLength="1" d="M330 470 C 306 462, 282 450, 264 434"/>
+        <path class="hwp c3 drawp d2" data-show="12+" pathLength="1" d="M269 450 L 264 434 L 281 437"/>
+        <path class="hwp c3 drawp d2" data-show="12+" pathLength="1" d="M232 392 C 226 378, 224 366, 222 352"/>
+        <path class="hwp c3 drawp d3" data-show="12+" pathLength="1" d="M215 368 L 222 352 L 233 365"/>
+        <path class="hwp c3 drawp" data-show="12+" pathLength="1" d="M586 472 C 616 468, 642 458, 662 442"/>
+        <path class="hwp c3 drawp d2" data-show="12+" pathLength="1" d="M645 444 L 662 442 L 656 458"/>
+      </g>
+    </g>
+    </g><!-- /.boardmain -->
+
+    <g class="rv" data-show="13+">
+      <line x1="400" y1="238" x2="400" y2="572" stroke="var(--hair)" stroke-dasharray="4 6"/>
+      <text x="210" y="246" text-anchor="middle" class="t13 b iink">What the CEO sees</text>
+      <g transform="translate(-66,192) scale(.6)">
+        <use href="#board"/>
+        <use href="#pers" transform="translate(219,316)" fill="var(--closed)" stroke="var(--closed)" stroke-width="1.6"/>
+        <use href="#pers" transform="translate(233,410)" fill="var(--closed)" stroke="var(--closed)" stroke-width="1.6"/>
+        <use href="#pers" transform="translate(354,477)" fill="var(--closed)" stroke="var(--closed)" stroke-width="1.6"/>
+        <use href="#pers" transform="translate(566,477)" fill="var(--closed)" stroke="var(--closed)" stroke-width="1.6"/>
+        <use href="#pers" transform="translate(687,410)" fill="var(--closed)" stroke="var(--closed)" stroke-width="1.6"/>
+      </g>
+      <text x="210" y="534" text-anchor="middle" class="t11 isec">Five votes against.</text>
+      <text x="210" y="556" text-anchor="middle" class="t10 imut">No way to tell who moved first.</text>
+      <text x="590" y="246" text-anchor="middle" class="t13 b iink">What happened behind the scenes</text>
+      <g transform="translate(314,192) scale(.6)">
+        <use href="#board"/>
+        <use href="#pers" transform="translate(233,410)" fill="var(--crayon3)" fill-opacity=".3" stroke="var(--crayon3)" stroke-width="1.8"/>
+        <use href="#pers" transform="translate(219,316)" fill="var(--crayon3)" fill-opacity=".3" stroke="var(--crayon3)" stroke-width="1.8"/>
+        <use href="#pers" transform="translate(566,477)" fill="var(--crayon3)" fill-opacity=".3" stroke="var(--crayon3)" stroke-width="1.8"/>
+        <use href="#pers" transform="translate(687,410)" fill="var(--crayon3)" fill-opacity=".3" stroke="var(--crayon3)" stroke-width="1.8"/>
+        <use href="#pers" transform="translate(354,477)" fill="var(--acc)" stroke="var(--acc)" stroke-width="1.6"/>
+        <g>
+          <path class="hwp c3" d="M372 490 C 420 508, 480 508, 537 488"/>
+          <path class="hwp c3" d="M520 484 L 537 488 L 526 501"/>
+          <path class="hwp c3" d="M330 470 C 306 462, 282 450, 264 434"/>
+          <path class="hwp c3" d="M269 450 L 264 434 L 281 437"/>
+          <path class="hwp c3" d="M232 392 C 226 378, 224 366, 222 352"/>
+          <path class="hwp c3" d="M215 368 L 222 352 L 233 365"/>
+          <path class="hwp c3" d="M586 472 C 616 468, 642 458, 662 442"/>
+          <path class="hwp c3" d="M645 444 L 662 442 L 656 458"/>
+        </g>
+      </g>
+      <text x="590" y="534" text-anchor="middle" class="t11 isec">The same five.</text>
+      <text x="590" y="556" text-anchor="middle" class="t10 imut">Elena started it, one conversation at a time.</text>
+    </g>
+  </svg>
+    </div>
+    <div class="againlayer rv" data-show="15">
+      <div class="againrow">
+        <p class="fxname closed" data-fork="o" role="button" tabindex="0">Opposition-chilling</p>
+        <p class="fxname shared" data-fork="s" role="button" tabindex="0">Sanitization</p>
+      </div>
+      <p class="againhint"><span>Follow the other effect &mdash; or keep scrolling</span></p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ================= 5. BACK TO THE TWO EFFECTS ================= -->
+<section class="scrolly fxsec fxsec2 actB" data-scrolly data-scene="1">
+  <div class="steps">
+    <div class="step" data-step="1"></div>
+    <div class="step" data-step="2"></div>
+    <div class="step" data-step="3"></div>
+
+    <div class="step" data-step="4"><div class="card">
+      <p>Suppose now that Sophia speaks up during the meeting.</p>
+    </div></div>
+    <div class="step" data-step="5"><div class="card">
+      <p>The CEO persuades her to vote in favor, in exchange for some verbal clarifications.</p>
+    </div></div>
+    <div class="step" data-step="6"><div class="card">
+      <p class="q">What will the minutes say?</p>
+    </div></div>
+    <div class="step" data-step="7"><div class="card">
+      <p>Management, even more than outside directors, has strong incentives to choose the blander version, to avoid giving ammunition to future plaintiffs.</p>
+    </div></div>
+    <div class="step" data-step="8"></div>
+  </div>
+  <div class="figure" aria-label="Back to the two effects; the second one, sanitization, becomes the heading">
+    <div class="fxstage">
+      <p class="fxlead">Transparency can change</p>
+      <div class="fxrow r1">
+        <p class="fxline"><span class="n">(1)</span> the way a board deliberates</p>
+        <div class="fxarrow rv" data-show="1"><svg viewBox="0 0 70 24" aria-hidden="true"><path d="M2 12 H54" stroke="var(--closed)" stroke-width="2"/><path d="M48 5 L58 12 L48 19" fill="none" stroke="var(--closed)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <p class="fxname closed rv" data-show="1">Opposition-chilling</p>
+      </div>
+      <div class="fxrow r2">
+        <p class="fxline"><span class="n">(2)</span> how the deliberation is written down</p>
+        <div class="fxarrow rv" data-show="1"><svg viewBox="0 0 70 24" aria-hidden="true"><path d="M2 12 H54" stroke="var(--shared)" stroke-width="2"/><path d="M48 5 L58 12 L48 19" fill="none" stroke="var(--shared)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <p class="fxname shared rv" data-show="1+">Sanitization</p>
+      </div>
+    </div>
+    <div class="boardlayer rv" data-show="4-7">
+<svg viewBox="40 125 750 500">
+    <g class="boardmain">
+    <use href="#board"/>
+    <text x="460" y="150" text-anchor="middle" class="t11 b ired" style="letter-spacing:.1em">MANAGEMENT</text>
+    <text x="416" y="220" text-anchor="end" class="t10 imut">CEO</text>
+    <use href="#pers" transform="translate(701,316)" fill="var(--crayon2)" fill-opacity=".26" stroke="var(--crayon2)" stroke-width="1.8"/>
+    <text x="701" y="296" text-anchor="middle" class="t10 imut">Sophia</text>
+
+    <g class="rv" data-show="4+">
+      <text x="560" y="300" class="hw c2">Dissent</text>
+      <g>
+        <path class="hwp c2 drawp" data-show="4+" pathLength="1" d="M690 300 C 640 300, 560 280, 496 240"/>
+        <path class="hwp c2 drawp d2" data-show="4+" pathLength="1" d="M503 255 L 496 240 L 513 240"/>
+      </g>
+    </g>
+
+    <g class="rv" data-show="5+">
+      <text x="398" y="432" class="hw c1">Clarifications + reassurances</text>
+      <g>
+        <path class="hwp c1 drawp" data-show="5+" pathLength="1" d="M498 268 C 566 380, 628 400, 682 346"/>
+        <path class="hwp c1 drawp d2" data-show="5+" pathLength="1" d="M668 351 L 682 346 L 677 360"/>
+      </g>
+    </g>
+
+    <g class="rv rise" data-show="6">
+      <g transform="translate(430,318)">
+        <rect width="62" height="78" rx="3" fill="var(--card)" stroke="var(--sec)"/>
+        <line x1="10" y1="18" x2="52" y2="18" stroke="var(--hair2)" stroke-width="2"/>
+        <line x1="10" y1="32" x2="52" y2="32" stroke="var(--hair2)" stroke-width="2"/>
+        <line x1="10" y1="46" x2="44" y2="46" stroke="var(--hair2)" stroke-width="2"/>
+        <text x="31" y="98" text-anchor="middle" class="t11 imut">the minutes</text>
+      </g>
+      <text x="502" y="364" class="hw c1" style="font-size:26px">?</text>
+    </g>
+    </g><!-- /.boardmain -->
+
+    <!-- scene 4: the same meeting, written down two ways -->
+    <g class="rv" data-show="7">
+      <g transform="translate(60,230)">
+        <rect width="316" height="360" rx="4" fill="var(--card)" stroke="var(--hair2)"/>
+        <text x="20" y="36" class="t11 b iink">One way to write it</text>
+        <line x1="20" y1="52" x2="296" y2="52" stroke="var(--hair)"/>
+        <text x="20" y="84" class="t10 isec">Sophia questioned the reliability of</text>
+        <text x="20" y="103" class="t10 isec">the projections for the following</text>
+        <text x="20" y="122" class="t10 isec">reasons&hellip; The CEO explained that the</text>
+        <text x="20" y="141" class="t10 isec">projections made sense based on the</text>
+        <text x="20" y="160" class="t10 isec">following implicit assumptions&hellip; The</text>
+        <text x="20" y="179" class="t10 isec">CEO also reassured Sophia about the</text>
+        <text x="20" y="198" class="t10 isec">following unwritten terms of her</text>
+        <text x="20" y="217" class="t10 isec">participation in the deal&hellip; Based on</text>
+        <text x="20" y="236" class="t10 isec">the clarifications and reassurances,</text>
+        <text x="20" y="255" class="t10 isec">Sophia declared that she would vote</text>
+        <text x="20" y="274" class="t10 isec">in favor.</text>
+        <text x="20" y="330" class="t10 imut">what was said</text>
+      </g>
+      <g transform="translate(434,230)">
+        <rect width="316" height="360" rx="4" fill="var(--card)" stroke="var(--shared)"/>
+        <text x="20" y="36" class="t11 b iink">&hellip;or this</text>
+        <line x1="20" y1="52" x2="296" y2="52" stroke="var(--hair)"/>
+        <text x="20" y="84" class="t10 isec">Following a thorough discussion of</text>
+        <text x="20" y="103" class="t10 isec">management&rsquo;s projections and the</text>
+        <text x="20" y="122" class="t10 isec">terms of the merger agreement, the</text>
+        <text x="20" y="141" class="t10 isec">board approved the proposal.</text>
+        <text x="20" y="330" class="t10 imut">what the minutes record</text>
+      </g>
+    </g>
+  </svg>
+    </div>
+    <div class="againlayer rv" data-show="8">
+      <div class="againrow">
+        <p class="fxname closed" data-fork="o" role="button" tabindex="0">Opposition-chilling</p>
+        <p class="fxname shared" data-fork="s" role="button" tabindex="0">Sanitization</p>
+      </div>
+      <p class="againhint"><span>Follow the other effect &mdash; or keep scrolling</span></p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ================= 5. DIFFERENT KINDS OF RECORDS ================= -->
+<section class="scrolly fxsec fxsec2 actC" data-scrolly data-scene="1">
+  <div class="steps">
+    <div class="step" data-step="1"><div class="card">
+      <p>These two effects operate differently on different kinds of corporate records.</p>
+    </div></div>
+    <div class="step" data-step="2"></div>
+    <div class="step" data-step="3"></div>
+    <div class="step" data-step="4"></div>
+    <div class="step" data-step="5"></div>
+    <div class="step" data-step="6"></div>
+    <div class="step" data-step="7"></div>
+    <div class="step" data-step="8"></div>
+    <div class="step" data-step="9"></div>
+    <div class="step" data-step="10"><div class="card">
+      <p>Taken together, these effects point different ways for different records.</p>
+      <p class="q">Hover over a row.</p>
+    </div></div>
+    <div class="step" data-step="11"></div>
+    <div class="step" data-step="12"></div>
+  </div>
+  <div class="figure" aria-label="Which records each effect falls on: shared or closed for opposition-chilling, formal or informal for sanitization">
+    <div class="fxstage">
+      <p class="fxlead">Transparency can change</p>
+      <div class="fxrow r1">
+        <p class="fxline"><span class="n">(1)</span> the way a board deliberates</p>
+        <div class="fxarrow rv" data-show="1"><svg viewBox="0 0 70 24" aria-hidden="true"><path d="M2 12 H54" stroke="var(--closed)" stroke-width="2"/><path d="M48 5 L58 12 L48 19" fill="none" stroke="var(--closed)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <p class="fxname closed rv" data-show="1">Opposition-chilling</p>
+      </div>
+      <div class="fxrow r2">
+        <p class="fxline"><span class="n">(2)</span> how the deliberation is written down</p>
+        <div class="fxarrow rv" data-show="1"><svg viewBox="0 0 70 24" aria-hidden="true"><path d="M2 12 H54" stroke="var(--shared)" stroke-width="2"/><path d="M48 5 L58 12 L48 19" fill="none" stroke="var(--shared)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <p class="fxname shared rv" data-show="1">Sanitization</p>
+      </div>
+    </div>
+
+    <!-- the two effects, each on the records it actually bites -->
+    <div class="reclayer">
+      <div class="recwrap">
+
+        <div class="recgroup">
+          <p class="fxname closed rechead">Opposition-chilling</p>
+
+          <div class="recrow tint-none rv" data-show="3+">
+            <div class="rlab"><span class="rh" data-src="Shared"><span class="kw">Shared</span> records</span><span class="rs">minutes, board deck, informal communications with management</span></div>
+            <div class="rarrow"><svg viewBox="0 0 70 24" aria-hidden="true"><path d="M2 12 H54" stroke="var(--mut)" stroke-width="2"/><path d="M48 5 L58 12 L48 19" fill="none" stroke="var(--mut)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="rout weak"><span class="rh">Not vulnerable</span><span class="rs">management already knows</span></div>
+          </div>
+
+          <div class="recrow tint-closed rv" data-show="4+">
+            <div class="rlab"><span class="rh" data-src="Closed"><span class="kw">Closed</span> records</span><span class="rs">director-to-director messages excluding management</span></div>
+            <div class="rarrow"><svg viewBox="0 0 70 24" aria-hidden="true"><path d="M2 12 H54" stroke="var(--closed)" stroke-width="2"/><path d="M48 5 L58 12 L48 19" fill="none" stroke="var(--closed)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="rout hot"><span class="rh">Very vulnerable</span><span class="rs">disclosure reveals the content to management and creates a risk of retaliation</span></div>
+            <div class="recnote rv" data-show="7+">
+              <svg viewBox="0 0 104 26" aria-hidden="true"><path class="hwp c1" d="M100 5 C 74 3, 34 7, 10 20"/><path class="hwp c1" d="M22 18 L 10 21 L 15 9"/></svg>
+              Reason to restrict access
+            </div>
+          </div>
+        </div>
+
+        <div class="recgroup">
+          <p class="fxname shared rechead">Sanitization</p>
+
+          <div class="recrow tint-shared rv" data-show="5+">
+            <div class="rlab"><span class="rh" data-src="Formal"><span class="kw">Formal</span> records</span><span class="rs">minutes, board deck</span></div>
+            <div class="rarrow"><svg viewBox="0 0 70 24" aria-hidden="true"><path d="M2 12 H54" stroke="var(--shared)" stroke-width="2"/><path d="M48 5 L58 12 L48 19" fill="none" stroke="var(--shared)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="rout blue"><span class="rh">More sanitized</span><span class="rs">documents are professionally curated</span></div>
+            <div class="recnote rv" data-show="8+">
+              <svg viewBox="0 0 104 26" aria-hidden="true"><path class="hwp c1" d="M100 5 C 74 3, 34 7, 10 20"/><path class="hwp c1" d="M22 18 L 10 21 L 15 9"/></svg>
+              Less informative but not a reason to restrict access
+            </div>
+          </div>
+
+          <div class="recrow tint-none rv" data-show="6+">
+            <div class="rlab"><span class="rh" data-src="Informal"><span class="kw">Informal</span> records</span><span class="rs">emails, texts</span></div>
+            <div class="rarrow"><svg viewBox="0 0 70 24" aria-hidden="true"><path d="M2 12 H54" stroke="var(--mut)" stroke-width="2"/><path d="M48 5 L58 12 L48 19" fill="none" stroke="var(--mut)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="rout"><span class="rh">Less sanitized</span><span class="rs">documents are more unguarded</span></div>
+            <div class="recnote rv" data-show="9+">
+              <svg viewBox="0 0 104 26" aria-hidden="true"><path class="hwp c1" d="M100 5 C 74 3, 34 7, 10 20"/><path class="hwp c1" d="M22 18 L 10 21 L 15 9"/></svg>
+              More informative = reason to facilitate access
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <template id="parked-taxonomy">
+    <div class="taxlayer rv" data-show="2">
+      <div class="taxwrap">
+        <div class="taxhead">
+          <div></div>
+          <div><span class="h">Shared</span><span class="sub">content known to management</span></div>
+          <div><span class="h">Closed</span><span class="sub">content unknown to management</span></div>
+        </div>
+        <div class="taxbody">
+          <div class="taxrowlab"><span class="h">Formal</span><span class="sub">prepared, reviewed, adopted</span></div>
+          <div class="taxcell qnw" data-pop="nw" tabindex="0">
+            <p class="eff on-s">Sanitization <b>+</b></p>
+            <p class="eff off">Opposition-chilling &minus;</p>
+            <p class="ex">minutes, board decks, management memos</p>
+          </div>
+          <div class="taxcell qne" data-pop="ne" tabindex="0">
+            <p class="eff on-s">Sanitization <b>+</b></p>
+            <p class="eff on-o">Opposition-chilling <b>+</b></p>
+            <p class="ex">in-camera session minutes, special-committee files, SLC investigation records</p>
+          </div>
+          <div class="taxrowlab"><span class="h">Informal</span><span class="sub">no production cycle</span></div>
+          <div class="taxcell qsw" data-pop="sw" tabindex="0">
+            <p class="eff off">Sanitization &minus;</p>
+            <p class="eff off">Opposition-chilling &minus;</p>
+            <p class="ex">emails, texts and notes shared with management</p>
+          </div>
+          <div class="taxcell qse" data-pop="se" tabindex="0">
+            <p class="eff off">Sanitization &minus;</p>
+            <p class="eff on-o">Opposition-chilling <b>+</b></p>
+            <p class="ex">director-to-director exchanges excluding management</p>
+          </div>
+        </div>
+        <div class="taxpop" id="taxpop"><p></p></div>
+      </div>
+    </div>
+    </template>
+
+    <div class="overlaycard rv" data-show="12">
+      <p class="ocq">Can Delaware courts apply these insights under current law?</p>
+    </div>
+
+    <!-- the four words twirl out of the rows above and compose this table -->
+    <div class="implayer">
+      <div class="impwrap">
+        <div class="imphead">
+          <div>Type of record</div><div>Examples</div><div>Implications</div>
+        </div>
+        <div class="impband b1" data-pop="i1" tabindex="0">
+          <div class="rt"><span class="w" data-word="Shared">Shared</span>, <span class="w" data-word="Formal">formal</span></div>
+          <div class="ex">Minutes, board deck, bylaws, management memos, accounts, official reports</div>
+          <div class="vd n">Neutral</div>
+        </div>
+        <div class="impband b2" data-pop="i2" tabindex="0">
+          <div class="rt"><span class="w" data-word="Shared">Shared</span>, <span class="w" data-word="Informal">informal</span></div>
+          <div class="ex">Emails, texts, notes sent to or shared with management</div>
+          <div class="vd a">Favor access</div>
+        </div>
+        <div class="impband b3" data-pop="i3" tabindex="0">
+          <div class="rt"><span class="w" data-word="Closed">Closed</span>, <span class="w" data-word="Informal">informal</span></div>
+          <div class="ex">Director-to-director emails, texts, notes excluding management</div>
+          <div class="vd r">Favor restrictions</div>
+        </div>
+        <div class="impband b4" data-pop="i4" tabindex="0">
+          <div class="rt"><span class="w" data-word="Closed">Closed</span>, <span class="w" data-word="Formal">formal</span></div>
+          <div class="ex">In-camera minutes, special committee files not disclosed to management</div>
+          <div class="vd r">Strongly favor restrictions</div>
+        </div>
+        <div class="taxpop" id="imppop"><p></p></div>
+        <div class="impnote rv" data-show="11">
+          <svg viewBox="0 0 104 30" aria-hidden="true">
+            <path class="hwp c1" d="M100 26 C 76 25, 36 21, 12 5"/>
+            <path class="hwp c1" d="M24 8 L 11 4 L 16 17"/>
+          </svg>
+          But only if content is truly hidden from management
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ================= 6. THE STATUTE ================= -->
+<section class="scrolly actD" data-scrolly data-scene="1">
+  <div class="steps">
+    <div class="step" data-step="1"><div class="card">
+      <p>Section&nbsp;220 of the Delaware General Corporation Law gives shareholders the right to inspect corporate books and records if they have a proper purpose for doing so.</p>
+    </div></div>
+    <div class="step" data-step="2"><div class="card">
+      <p>The new version of the statute, enacted in 2025, creates a two-tier system.</p>
+    </div></div>
+    <div class="step" data-step="3"><div class="card">
+      <p>For core board-level records, shareholders must show that they have a credible basis for investigating wrongdoing. A minimal burden.</p>
+    </div></div>
+    <div class="step" data-step="4"><div class="card">
+      <p>For all other records, shareholders must pass two additional filters. The evidentiary burden is higher &mdash; clear and convincing evidence.</p>
+    </div></div>
+    <div class="step" data-step="5"></div>
+    <div class="step" data-step="6"><div class="card">
+      <p>Top Delaware litigators are not sure.</p>
+      <p class="cuewrap"><span class="clickcue" data-strand="v" role="button" tabindex="0">Click here to read the results of the survey of top Delaware litigators</span></p>
+    </div></div>
+    <div class="step" data-step="7"><div class="card">
+      <p>Compelling need can become the vehicle to take into account <span class="hl-s">sanitization</span> and <span class="hl-o">opposition-chilling</span>.</p>
+    </div></div>
+    <div class="step" data-step="8"></div>
+    <div class="step" data-step="9"></div>
+    <div class="step" data-step="10"></div>
+    <div class="step" data-step="11"></div>
+  </div>
+
+  <div class="figure" aria-label="Section 220 after the 2025 amendment: core and non-core records, and what compelling need could mean">
+
+    <div class="stlayer">
+      <div class="stwrap">
+        <div class="sthead">
+          <div>Records</div>
+          <div class="rv" data-show="2+">Statutory category</div>
+          <div></div>
+        </div>
+        <div class="stbody">
+          <div class="stcell">Bylaws, board minutes, board materials</div>
+          <div class="stcell">In-camera meetings, special committees</div>
+          <div class="stcell">Management-level memos</div>
+          <div class="stcell">Informal communications by or with management</div>
+          <div class="stcell">Informal communications among outside directors, excluding management</div>
+
+          <div class="stcat core rv" data-show="2+">Core records</div>
+          <div class="stcat noncore rv" data-show="2+">Non-core records</div>
+
+          <div class="stnote core rv" data-show="3+">
+            <svg viewBox="0 0 104 26" aria-hidden="true"><path class="hwp c1" d="M100 5 C 74 3, 34 7, 10 20"/><path class="hwp c1" d="M22 18 L 10 21 L 15 9"/></svg>
+            Proper purpose + credible basis
+          </div>
+          <div class="stnote noncore rv" data-show="4+">
+            <svg viewBox="0 0 104 26" aria-hidden="true"><path class="hwp c1" d="M100 5 C 74 3, 34 7, 10 20"/><path class="hwp c1" d="M22 18 L 10 21 L 15 9"/></svg>
+            <span class="cnsrc">Compelling need</span> + clear and convincing evidence
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlaycard rv" data-show="5">
+      <p class="ocq">But what does &ldquo;compelling need&rdquo; mean?</p>
+    </div>
+
+    <div class="cnlayer">
+      <p class="cnwords"><span class="cw cw-c">Compelling</span> <span class="cw cw-n">need</span></p>
+    </div>
+
+    <div class="cnbuild">
+      <div class="cnwrap">
+        <div class="cngroup">
+          <p class="fxname closed rechead cnhead cnhead-c">Compelling</p>
+          <div class="recrow tint-none rv" data-show="10+">
+            <div class="rlab"><span class="rh">Shared record</span><span class="rs">no opposition-chilling cost</span></div>
+            <div class="rarrow"><svg viewBox="0 0 70 24" aria-hidden="true"><path d="M2 12 H54" stroke="var(--mut)" stroke-width="2"/><path d="M48 5 L58 12 L48 19" fill="none" stroke="var(--mut)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="rout"><span class="rh">Need not outweighed by chilling effects</span></div>
+          </div>
+          <div class="recrow tint-closed rv" data-show="10+">
+            <div class="rlab"><span class="rh">Closed record</span><span class="rs">opposition-chilling cost</span></div>
+            <div class="rarrow"><svg viewBox="0 0 70 24" aria-hidden="true"><path d="M2 12 H54" stroke="var(--closed)" stroke-width="2"/><path d="M48 5 L58 12 L48 19" fill="none" stroke="var(--closed)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="rout hot"><span class="rh">Need must be extraordinarily high, or <span class="rword">restrictions</span> must reduce the chilling effect</span></div>
+          </div>
+        </div>
+
+        <div class="cngroup">
+          <p class="fxname shared rechead cnhead cnhead-n">need</p>
+          <div class="recrow tint-shared rv" data-show="9+">
+            <div class="rlab"><span class="rh">Non-core informal records</span><span class="rs">less sanitized = more informative</span></div>
+            <div class="rarrow"><svg viewBox="0 0 70 24" aria-hidden="true"><path d="M2 12 H54" stroke="var(--shared)" stroke-width="2"/><path d="M48 5 L58 12 L48 19" fill="none" stroke="var(--shared)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="rout blue"><span class="rh">More need</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="exnote ex-doc rv" data-show="11">
+      <svg viewBox="0 0 104 26" aria-hidden="true"><path class="hwp c1" d="M4 6 C 30 4, 70 8, 96 21"/><path class="hwp c1" d="M84 19 L 97 22 L 91 10"/></svg>
+      <p>Is this reading of &ldquo;compelling need&rdquo; doctrinally sound?</p>
+      <span class="clickcue" data-panel="doc" role="button" tabindex="0">Click to explore</span>
+    </div>
+
+    <div class="exnote ex-res rv" data-show="11">
+      <svg viewBox="0 0 104 30" aria-hidden="true"><path class="hwp c1" d="M100 26 C 76 25, 36 21, 12 5"/><path class="hwp c1" d="M24 8 L 11 4 L 16 17"/></svg>
+      <p>What kind of restrictions can reduce the opposition-chilling effect?</p>
+      <span class="clickcue" data-panel="res" role="button" tabindex="0">Click to explore</span>
+    </div>
+
+    <aside class="expanel side-left" id="panel-doc" hidden>
+      <button type="button" class="expclose" aria-label="Close">&times;</button>
+      <h3>Is this reading doctrinally sound?</h3>
+      <div class="expages">
+        <div class="expage"><p><b>The phrase is borrowed.</b> The first attempts to read the new statute reached for attorney work product, which uses &ldquo;compelling need&rdquo; for a similar two-tier structure and rests on a chilling rationale.</p></div>
+        <div class="expage"><p><b>But it protects the wrong thing.</b> Work product guards a lawyer&rsquo;s own mental processes and the adversarial system. A shareholder inspection has no adversary whose preparation is being taken. What is at stake here is the quality of a board&rsquo;s deliberation.</p></div>
+        <div class="expage"><p><b>The better analogy is the deliberative-process privilege.</b> It protects candor in collective deliberation on exactly this rationale: officials &ldquo;will not communicate candidly among themselves if each remark is a potential item of discovery and front page news.&rdquo;</p><p class="expcite">Dep&rsquo;t of Interior v. Klamath Water Users Protective Ass&rsquo;n, 532 U.S. 1 (2001)</p></div>
+        <div class="expage"><p><b>Delaware precedent is not in the way.</b> <em>Grimes</em> rejected a chilling argument in 1998, but it was about a formal, counsel-prepared committee report shared with the whole board. That is a shared formal record, where the risk of opposition-chilling is near zero. It says nothing about the closed informal records that barely existed in 1998.</p></div>
+      </div>
+      <nav class="expnav"><button type="button" class="expprev" aria-label="Previous">&lsaquo;</button><span class="expdots"></span><button type="button" class="expnext" aria-label="Next">&rsaquo;</button></nav>
+    </aside>
+
+    <aside class="expanel side-right" id="panel-res" hidden>
+      <button type="button" class="expclose" aria-label="Close">&times;</button>
+      <h3>What restrictions could reduce the effect?</h3>
+      <div class="expages">
+        <div class="expage"><p><b>What courts do now.</b> Standard confidentiality orders keep information from outsiders such as competitors and the general public. In <em>Disney</em>, for example, Chancery stopped a shareholder from publicizing what he had obtained by inspection.</p></div>
+        <div class="expage"><p><b>Wrong audience.</b> But for opposition-chilling the relevant audience is management. A closed record may become known to management through the production process itself: the company&rsquo;s litigation team must gather and review the records, and that team answers to management.</p></div>
+        <div class="expage"><p><b>Two possible remedies.</b></p><p class="expsub"><b>Identity redaction:</b> disclose what was said, withhold who said it. It must be done by people independent of management, and it fails where the substance reveals the identity of the speaker.</p><p class="expsub"><b>Attorneys&rsquo;-eyes-only:</b> long used in discovery, but here the party to be walled off is the company&rsquo;s own management. It works only with a real wall: a committee of outside directors with its own counsel.</p></div>
+        <div class="expage"><p><b>Neither is perfect.</b> Where the opposition-chilling cost cannot be contained, courts should apply a strong presumption against disclosure of closed records.</p></div>
+      </div>
+      <nav class="expnav"><button type="button" class="expprev" aria-label="Previous">&lsaquo;</button><span class="expdots"></span><button type="button" class="expnext" aria-label="Next">&rsaquo;</button></nav>
+    </aside>
+
+  </div>
+</section>
+
+<!-- ================= SIDE STORY: THE SURVEY ================= -->
+<section class="scrolly surveysec actS" data-scrolly data-scene="1">
+  <div class="steps">
+    <div class="step" data-step="1"><div class="card">
+      <p>Between April&nbsp;29 and May&nbsp;15, 2026 I ran an anonymous survey of leading Delaware litigators on how Section&nbsp;220 demands actually work.</p>
+    </div></div>
+    <div class="step" data-step="2"><div class="card">
+      <p>They are experienced, and they come from both sides of the bar: fifteen have practiced Delaware corporate law for more than twenty years.</p>
+      <p class="q">The sample is too small for statistical inference. Read the results as experienced practitioners describing current practice.</p>
+    </div></div>
+    <div class="step" data-step="3"><div class="card">
+      <p>Demands for informal records were common before SB&nbsp;21 &mdash; but production was not, and most demands never reach a judge.</p>
+    </div></div>
+    <div class="step" data-step="4"><div class="card">
+      <p>Production already tracks the shared/closed line, though no decision says so. Communications with management are produced far more often than communications among outside directors, or between them and their own advisers.</p>
+    </div></div>
+    <div class="step" data-step="5"><div class="card">
+      <p>Courts are well accustomed to conditioning inspection. But redacting who spoke is something almost none of them has ever seen &mdash; and walling records off from management&rsquo;s own counsel, though not unknown, is far from routine.</p>
+    </div></div>
+    <div class="step" data-step="6"><div class="card">
+      <p>Plaintiff-side respondents describe boards adjusting to the new statute in exactly the way the sanitization effect predicts.</p>
+    </div></div>
+    <div class="step" data-step="7"><div class="card">
+      <p>And on the meaning of the new standard, the practitioners divide as sharply as the first decisions do.</p>
+    </div></div>
+    <div class="step" data-step="8"></div>
+  </div>
+
+  <div class="figure" aria-label="Results of a survey of leading Delaware Chancery litigators">
+    <div class="svlayer">
+
+      <div class="svstate rv" data-show="1">
+        <div class="svrow">
+          <div class="svstat"><span class="n">78</span><span class="l">Chambers-ranked partners</span></div>
+          <div class="svstat"><span class="n">25</span><span class="l">responded</span></div>
+          <div class="svstat hl"><span class="n">19</span><span class="l">completed in full</span></div>
+        </div>
+      </div>
+
+      <div class="svstate rv" data-show="2">
+        <div class="svrow">
+          <div class="svstat"><span class="n">8</span><span class="l">mainly for shareholders</span></div>
+          <div class="svstat"><span class="n">5</span><span class="l">mainly for companies</span></div>
+          <div class="svstat"><span class="n">11</span><span class="l">mixed practice</span></div>
+        </div>
+      </div>
+
+      <div class="svstate rv" data-show="3">
+        <div class="svbars">
+          <div class="svbar"><span class="lab">Sought in a majority of demands</span><span class="tr"><i style="width:62%"></i></span><span class="v">13 of 21</span></div>
+          <div class="svbar"><span class="lab">Rarely produced by agreement</span><span class="tr"><i style="width:48%"></i></span><span class="v">10 of 21</span></div>
+          <div class="svbar"><span class="lab">Rarely ordered by a court</span><span class="tr"><i style="width:62%"></i></span><span class="v">13 of 21</span></div>
+          <div class="svbar"><span class="lab">A third or fewer of demands end in court</span><span class="tr"><i style="width:76%"></i></span><span class="v">16 of 21</span></div>
+        </div>
+      </div>
+
+      <div class="svstate rv" data-show="4">
+        <div class="svbars">
+          <div class="svbar"><span class="lab"><b>Shared</b> &mdash; with management: often produced by agreement</span><span class="tr s"><i style="width:43%"></i></span><span class="v">9 of 21</span></div>
+          <div class="svbar"><span class="lab"><b>Closed</b> &mdash; among outside directors: rarely produced</span><span class="tr o"><i style="width:86%"></i></span><span class="v">18 of 21</span></div>
+          <div class="svbar"><span class="lab"><b>Closed</b> &mdash; with their own advisers: rarely ordered</span><span class="tr o"><i style="width:90%"></i></span><span class="v">19 of 21</span></div>
+        </div>
+        <p class="svquote">&ldquo;Typically a company will only produce informal records sent or received by a member of management regarding a specific event.&rdquo;<span class="svattr">Attorney&nbsp;#4</span></p>
+      </div>
+
+      <div class="svstate rv" data-show="5">
+        <div class="svbars">
+          <div class="svbar"><span class="lab">Confidentiality order, seen many times</span><span class="tr"><i style="width:86%"></i></span><span class="v">18 of 21</span></div>
+          <div class="svbar"><span class="lab">Attorneys&rsquo;-eyes-only, at least sometimes</span><span class="tr"><i style="width:57%"></i></span><span class="v">12</span></div>
+          <div class="svbar"><span class="lab">Redaction of author or recipient</span><span class="tr"><i style="width:5%"></i></span><span class="v">1 of 21</span></div>
+          <div class="svbar"><span class="lab">Disclosure to plaintiff&rsquo;s counsel alone</span><span class="tr"><i style="width:33%"></i></span><span class="v">7 of 21</span></div>
+        </div>
+      </div>
+
+      <div class="svstate rv" data-show="6">
+        <p class="svquote">&ldquo;Some Boards create formal board materials that use a lot of words without saying anything&hellip; catering to the statute by covering a topic very generally but not providing any detail, so that informal materials do not need to be produced.&rdquo;<span class="svattr">Attorney&nbsp;#8</span></p>
+        <p class="svquote">&ldquo;Company boards have become very good at sanitizing board meeting minutes&rdquo; &mdash; quoting the standard formula, &ldquo;a discussion ensued where members of the board asked questions which were answered.&rdquo;<span class="svattr">Attorney&nbsp;#13</span></p>
+      </div>
+
+      <div class="svstate rv" data-show="7">
+        <p class="svquote">&ldquo;No one really knows the proof needed for the Court to order production of documents under 220(f) and 220(g).&rdquo;<span class="svattr">Attorney&nbsp;#12</span></p>
+        <div class="svsplit">
+          <div class="svside">a &ldquo;sea change in how 220 proceedings unfold&rdquo;<span class="svattr">Attorney&nbsp;#4</span></div>
+          <div class="svvs">vs</div>
+          <div class="svside">SB&nbsp;21 &ldquo;really just formalized what those who do this all the time know&rdquo;<span class="svattr">Attorney&nbsp;#24</span></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="againlayer rv" data-show="8">
+      <p><button type="button" class="retbtn">&larr; Back to main story</button></p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THE TAKEAWAY ================= -->
+<section class="scrolly takesec" data-scrolly data-scene="1">
+  <div class="figure" aria-label="What the Article concludes">
+    <div class="takelayer">
+      <p class="takehead rv" data-show="1+">Takeaways</p>
+      <div class="takepoint rv rise" data-show="1+"><span class="hand" aria-hidden="true">&#9758;&#xFE0E;</span>
+        <p>Two chilling effects of board transparency have gone unexamined in the literature: <span class="hl-o">opposition-chilling</span> and <span class="hl-s">sanitization</span>.</p>
+      </div>
+      <div class="takepoint rv rise" data-show="2+"><span class="hand" aria-hidden="true">&#9758;&#xFE0E;</span>
+        <p>Courts should take them into account &mdash; but they operate differently on different types of internal records.</p>
+      </div>
+      <div class="takepoint rv rise" data-show="3+"><span class="hand" aria-hidden="true">&#9758;&#xFE0E;</span>
+        <p>Informal records are less sanitized and more informative, which is a reason to <b>facilitate</b> access to them.</p>
+      </div>
+      <div class="takepoint rv rise" data-show="4+"><span class="hand" aria-hidden="true">&#9758;&#xFE0E;</span>
+        <p>Closed records &mdash; those not previously known to management &mdash; are highly vulnerable to opposition-chilling, which is a reason to <b>restrict</b> access to them.</p>
+      </div>
+      <div class="takepoint rv rise" data-show="5+"><span class="hand" aria-hidden="true">&#9758;&#xFE0E;</span>
+        <p>Delaware courts could apply most of these insights by interpreting the new &ldquo;compelling need&rdquo; standard.</p>
+      </div>
+      <p class="takelink rv" data-show="6"><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7248478" target="_blank" rel="noopener">Read the full paper here &#8594;</a></p>
+      <p class="takeagain rv" data-show="6"><button type="button" class="startover">&uarr; Start again</button></p>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="step" data-step="1"></div>
+    <div class="step" data-step="2"></div>
+    <div class="step" data-step="3"></div>
+    <div class="step" data-step="4"></div>
+    <div class="step" data-step="5"></div>
+    <div class="step" data-step="6"></div>
+  </div>
+</section>
+
+
+
+<script>
+(function(){
+  'use strict';
+
+  /* ---------- reveal spec: "1", "2-4", "3+" (comma-separable) ---------- */
+  function inSpec(spec, i){
+    return spec.split(',').some(function(p){
+      p = p.trim();
+      if (p.endsWith('+')) return i >= parseInt(p, 10);
+      if (p.indexOf('-') > 0){ var ab = p.split('-'); return i >= +ab[0] && i <= +ab[1]; }
+      return i === +p;
+    });
+  }
+  function applyScene(sec, i){
+    sec.dataset.scene = i;
+    sec.querySelectorAll('[data-show]').forEach(function(el){
+      el.classList.toggle('on', inSpec(el.dataset.show, i));
+    });
+  }
+
+  /* ---------- scroller ----------
+     The active scene is a pure function of scroll position, recomputed each
+     frame from geometry. Event-driven observers with a thin trigger band can
+     miss fast crossings and leave the scene stuck; this cannot. */
+  var mqMobile = matchMedia('(max-width: 880px)');
+  var sections = [];
+  document.querySelectorAll('[data-scrolly]').forEach(function(sec){
+    var steps = Array.prototype.slice.call(sec.querySelectorAll('.step'));
+    sections.push({sec: sec, steps: steps, current: 0});
+    /* scene 0 = not arrived yet. Applying scene 1 here would pre-reveal every
+       section's opening state long before the reader reaches it. */
+    applyScene(sec, sec.getBoundingClientRect().top < innerHeight - 40 ? 1 : 0);
+    if (steps[0]) steps[0].classList.add('active');
+  });
+  function activationY(){
+    if (mqMobile.matches || document.body.classList.contains('layout-band')) return innerHeight * 0.78;
+    return innerHeight * 0.5;
+  }
+  function setStep(S, i){
+    if (i === S.current) return;
+    S.current = i;
+    S.steps.forEach(function(s){ s.classList.toggle('active', parseInt(s.dataset.step, 10) === i); });
+    applyScene(S.sec, i);
+  }
+  var ticking = false;
+  function update(){
+    ticking = false;
+    var cy = activationY();
+    sections.forEach(function(S){
+      var r = S.sec.getBoundingClientRect();
+      if (!r.height) return;                       /* a folded strand */
+      if (r.bottom < -300 || r.top > innerHeight - 40) return;
+      var containing = 0, nearest = 0, nearestD = Infinity;
+      S.steps.forEach(function(st){
+        var sr = st.getBoundingClientRect();
+        if (!sr.height) return;                    /* a folded step */
+        var i = parseInt(st.dataset.step, 10);
+        if (sr.top <= cy && sr.bottom > cy) containing = i;
+        var d = Math.abs((sr.top + sr.bottom) / 2 - cy);
+        if (d < nearestD){ nearestD = d; nearest = i; }
+      });
+      setStep(S, containing || nearest || 1);
+    });
+  }
+  function onScroll(){
+    if (!ticking){ ticking = true; requestAnimationFrame(update); }
+  }
+  addEventListener('scroll', onScroll, {passive: true});
+  addEventListener('resize', onScroll);
+  update();
+
+  /* ---------- survey charts ---------- */
+  var N = 21, MAXW = 366, X0 = 284, ROWH = 46, BARH = 24, TOP = 14;
+  function roundBar(x, y, w, h){
+    var r = Math.min(4, w);
+    return 'M' + x + ' ' + y + ' h' + (w - r) + ' a' + r + ' ' + r + ' 0 0 1 ' + r + ' ' + r +
+           ' v' + (h - 2*r) + ' a' + r + ' ' + r + ' 0 0 1 -' + r + ' ' + r + ' h-' + (w - r) + ' z';
+  }
+  function buildChart(id, rows){
+    var svg = document.getElementById(id);
+    if (!svg) return;
+    var H = TOP + rows.length * ROWH + 26;
+    svg.setAttribute('viewBox', '0 0 700 ' + H);
+    var ns = 'http://www.w3.org/2000/svg', frag = document.createDocumentFragment();
+    function el(t, at){ var e = document.createElementNS(ns, t); for (var k in at) e.setAttribute(k, at[k]); return e; }
+    /* full-scale reference line at n=21 */
+    var gx = X0 + MAXW;
+    frag.appendChild(el('line', {x1:gx, y1:TOP-4, x2:gx, y2:TOP+rows.length*ROWH-14, stroke:'var(--hair2)', 'stroke-dasharray':'3 4'}));
+    var cap = el('text', {x:gx, y:TOP + rows.length*ROWH + 6, 'text-anchor':'end', 'class':'t10', fill:'var(--mut)'});
+    cap.textContent = '21 = all respondents'; frag.appendChild(cap);
+    rows.forEach(function(r, idx){
+      var y = TOP + idx * ROWH;
+      var g = el('g', {});
+      var lab = el('text', {x:X0-12, y:y+BARH/2+4, 'text-anchor':'end', 'class':'t12', fill:'var(--sec)'});
+      lab.textContent = r.label; g.appendChild(lab);
+      var w = Math.max(2, Math.round(r.n / N * MAXW));
+      var bar = el('path', {d:roundBar(X0, y, w, BARH), fill:(r.k === 'closed' ? 'var(--closed)' : 'var(--shared)')});
+      var tip = el('title', {}); tip.textContent = r.label + ' — ' + r.n + ' of ' + N; bar.appendChild(tip);
+      g.appendChild(bar);
+      var val = el('text', {x:X0+w+9, y:y+BARH/2+4, 'class':'t12 b', fill:'var(--ink)', style:'font-variant-numeric:tabular-nums'});
+      val.textContent = r.n; g.appendChild(val);
+      frag.appendChild(g);
+    });
+    svg.appendChild(frag);
+  }
+  buildChart('chartA', [
+    {label:'managers ↔ managers', n:4, k:'shared'},
+    {label:'managers ↔ outside directors', n:9, k:'shared'},
+    {label:'outside directors only', n:3, k:'closed'},
+    {label:'managers ↔ advisers', n:4, k:'shared'},
+    {label:'outside directors ↔ advisers', n:3, k:'closed'}
+  ]);
+  buildChart('chartB', [
+    {label:'confidentiality / protective order', n:20, k:'lit'},
+    {label:'relevance redactions', n:15, k:'lit'},
+    {label:'attorneys’-eyes-only', n:12, k:'closed'},
+    {label:'counsel-only (kept from company)', n:7, k:'closed'},
+    {label:'director-identity redaction', n:1, k:'closed'}
+  ]);
+
+  /* ---------- guthrie stage: placeholder photo, responsive scale,
+     and the photo -> statute-book particle dissolve ---------- */
+  var reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var gstage = document.getElementById('gstage');
+  if (gstage){
+    var secg = gstage.closest('.secg');
+    var gouter = gstage.parentElement;
+    var PH = {x:250, y:40, w:300, h:390};   /* photo incl. mat, stage coords */
+    var BK = {x:270, y:70, w:260, h:340};   /* book cover, stage coords */
+
+    function drawPhoto(ctx, x, y, w, h){
+      ctx.fillStyle = '#e7e2d6'; ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = '#2c2a25'; ctx.lineWidth = 3; ctx.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
+      var px = x + 20, py = y + 20, pw = w - 40, ph = h - 40;
+      var g = ctx.createLinearGradient(0, py, 0, py + ph);
+      g.addColorStop(0, '#b8b3a8'); g.addColorStop(1, '#7e7a70');
+      ctx.fillStyle = g; ctx.fillRect(px, py, pw, ph);
+      var rg = ctx.createRadialGradient(px + pw/2, py + ph*.42, ph*.18, px + pw/2, py + ph*.5, ph*.75);
+      rg.addColorStop(0, 'rgba(0,0,0,0)'); rg.addColorStop(1, 'rgba(40,36,30,.55)');
+      ctx.fillStyle = rg; ctx.fillRect(px, py, pw, ph);
+      ctx.fillStyle = '#413d35';
+      ctx.beginPath(); ctx.ellipse(px + pw/2, py + ph*.33, pw*.17, ph*.15, 0, 0, 7); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(px + pw*.16, py + ph);
+      ctx.bezierCurveTo(px + pw*.2, py + ph*.62, px + pw*.38, py + ph*.55, px + pw*.5, py + ph*.54);
+      ctx.bezierCurveTo(px + pw*.62, py + ph*.55, px + pw*.8, py + ph*.62, px + pw*.84, py + ph);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#cfc9bb';
+      ctx.beginPath(); ctx.moveTo(px + pw*.44, py + ph*.56); ctx.lineTo(px + pw*.5, py + ph*.66); ctx.lineTo(px + pw*.56, py + ph*.56); ctx.closePath(); ctx.fill();
+    }
+    function rr(ctx, x, y, w, h, r){
+      ctx.beginPath(); ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+    }
+    function drawBook(ctx, x, y, w, h){
+      rr(ctx, x, y, w, h, 8); ctx.fillStyle = '#1d3a5f'; ctx.fill();
+      var sp = ctx.createLinearGradient(x, 0, x + 34, 0);
+      sp.addColorStop(0, 'rgba(0,0,0,.5)'); sp.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = sp; ctx.fillRect(x, y, 34, h);
+      ctx.strokeStyle = '#cba45c'; ctx.lineWidth = 2;
+      ctx.strokeRect(x + 18, y + 16, w - 36, h - 32);
+      ctx.fillStyle = '#cba45c'; ctx.textAlign = 'center';
+      ctx.font = '600 30px Georgia, serif';  ctx.fillText('CORPORATE', x + w/2, y + h*.36);
+      ctx.font = '600 26px Georgia, serif';  ctx.fillText('LAW',  x + w/2, y + h*.47);
+      ctx.fillText('CODE', x + w/2, y + h*.57);
+      ctx.font = '600 24px Georgia, serif';  ctx.fillText('§', x + w/2, y + h*.75);
+    }
+
+    var gp = document.getElementById('gphoto');
+    drawPhoto(gp.getContext('2d'), 0, 0, 300, 390);
+
+    function fitStage(){
+      var fig = gouter.parentElement;
+      var s = Math.min(1, (fig.clientWidth - 30) / 620, (fig.clientHeight - 30) / 600);
+      if (!(s > 0)) s = 1;
+      gstage.style.transform = 'scale(' + s + ')';
+      gouter.style.width = (620 * s) + 'px';
+      gouter.style.height = (600 * s) + 'px';
+    }
+    addEventListener('resize', fitStage);
+    fitStage();
+
+    /* particle dissolve: sample photo and book pixels, pair, fly between them */
+    var parts = null;
+    function samples(draw, rect){
+      var c = document.createElement('canvas'); c.width = 620; c.height = 600;
+      var cx = c.getContext('2d');
+      draw(cx, rect.x, rect.y, rect.w, rect.h);
+      var d = cx.getImageData(0, 0, 620, 600).data, out = [];
+      for (var y = 0; y < 600; y += 6) for (var x = 0; x < 620; x += 6){
+        var i = (y * 620 + x) * 4;
+        if (d[i + 3] > 40) out.push([x, y, d[i], d[i + 1], d[i + 2]]);
+      }
+      return out;
+    }
+    function buildParts(){
+      var A = samples(drawPhoto, PH), B = samples(drawBook, BK);
+      for (var i = B.length - 1; i > 0; i--){ var j = (Math.random() * (i + 1)) | 0; var t = B[i]; B[i] = B[j]; B[j] = t; }
+      var n = Math.max(A.length, B.length); parts = [];
+      for (var k = 0; k < n; k++){
+        var a = A[k % A.length], b = B[k % B.length];
+        parts.push({ax:a[0], ay:a[1], ar:a[2], ag:a[3], ab:a[4],
+                    bx:b[0], by:b[1], br:b[2], bg:b[3], bb:b[4],
+                    sx:(Math.random() - .5) * 76, sy:(Math.random() - .5) * 76});
+      }
+    }
+    var dctx = document.getElementById('gdust').getContext('2d');
+    var p = 0, target = 0, raf = null, last = 0;
+    function ease(t){ return t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2; }
+    function frame(ts){
+      if (!last) last = ts;
+      var dt = Math.min(50, ts - last); last = ts;
+      var dir = target > p ? 1 : -1;
+      p += dir * dt / 1500;
+      var done = (dir > 0 && p >= target) || (dir < 0 && p <= target);
+      if (done) p = target;
+      var e = ease(p), m = Math.sin(Math.PI * Math.min(1, Math.max(0, p)));
+      dctx.clearRect(0, 0, 620, 600);
+      for (var i = 0; i < parts.length; i++){
+        var q = parts[i];
+        dctx.fillStyle = 'rgb(' + ((q.ar + (q.br - q.ar) * e) | 0) + ',' + ((q.ag + (q.bg - q.ag) * e) | 0) + ',' + ((q.ab + (q.bb - q.ab) * e) | 0) + ')';
+        dctx.fillRect(q.ax + (q.bx - q.ax) * e + q.sx * m, q.ay + (q.by - q.ay) * e + q.sy * m, 3.4, 3.4);
+      }
+      if (!done){ raf = requestAnimationFrame(frame); }
+      else { raf = null; last = 0; gstage.classList.remove('flying'); }
+    }
+    function flyTo(t){
+      if (reduceMotion) return;      /* fall back to the plain rv crossfade */
+      if (!parts) buildParts();
+      if (t === target && !raf) return;
+      target = t;
+      gstage.classList.add('flying');
+      if (!raf){ last = 0; raf = requestAnimationFrame(frame); }
+    }
+    var lastScene = 1;
+    var gmo = new MutationObserver(function(){
+      var s = parseInt(secg.dataset.scene, 10) || 1;
+      if (s >= 3 && lastScene < 3) flyTo(1);
+      else if (s < 3 && lastScene >= 3) flyTo(0);
+      lastScene = s;
+    });
+    gmo.observe(secg, {attributes:true, attributeFilter:['data-scene']});
+  }
+
+  /* ---------- 2x2 cell focus ---------- */
+  var sec5 = document.querySelector('.sec5');
+  if (sec5){
+    var focusMap = {1:['disney','abc','tesla','fb'], 2:['disney','tesla'], 3:['abc'], 4:['fb']};
+    var mo = new MutationObserver(function(){
+      var i = parseInt(sec5.dataset.scene, 10) || 1;
+      var focus = focusMap[i] || focusMap[1];
+      sec5.querySelectorAll('.cell').forEach(function(c){
+        var onlist = focus.indexOf(c.dataset.cell) >= 0;
+        c.style.opacity = onlist ? 1 : 0.22;
+        c.style.transition = 'opacity .5s';
+      });
+    });
+    mo.observe(sec5, {attributes:true, attributeFilter:['data-scene']});
+  }
+
+  /* ---------- presenter mode: P toggles; clicker (PageUp/PageDown), arrows,
+     and space snap exactly one scene per press ---------- */
+  var presenting = false, stops = [], pIdx = 0, lastNav = 0;
+  function collectStops(){
+    stops = [];
+    var hero = document.querySelector('.hero');
+    if (hero) stops.push(hero);
+    document.querySelectorAll('[data-scrolly] .step').forEach(function(s){
+      if (s.getBoundingClientRect().height) stops.push(s);
+    });
+    var outro = document.querySelector('.outro');
+    if (outro) stops.push(outro);
+  }
+  function nearestStop(){
+    var cy = innerHeight / 2, best = 0, bestD = Infinity;
+    stops.forEach(function(el, i){
+      var r = el.getBoundingClientRect();
+      var d = Math.abs(r.top + r.height / 2 - cy);
+      if (d < bestD){ bestD = d; best = i; }
+    });
+    return best;
+  }
+  function updateHud(i){
+    var hud = document.getElementById('phud');
+    if (!hud) return;
+    var label = (i === 0) ? 'title' : (i === stops.length - 1 ? 'end' : i + ' / ' + (stops.length - 2));
+    hud.textContent = 'presenter · ' + label + ' · P exits';
+  }
+  function goTo(i){
+    i = Math.max(0, Math.min(stops.length - 1, i));
+    pIdx = i; lastNav = Date.now();
+    if (i === 0){ window.scrollTo({top: 0}); }
+    else if (i === stops.length - 1){ stops[i].scrollIntoView({block: 'start'}); }
+    else {
+      var r = stops[i].getBoundingClientRect();
+      window.scrollBy({top: r.top + r.height / 2 - activationY()});
+    }
+    updateHud(i);
+  }
+  /* keyboard nav trusts the last snapped index briefly (mid-animation presses),
+     then re-syncs to whatever position free scrolling has reached */
+  function navBase(){ return (Date.now() - lastNav < 1600) ? pIdx : nearestStop(); }
+  addEventListener('keydown', function(e){
+    if (e.key === 'l' || e.key === 'L'){
+      document.body.classList.toggle('layout-band');
+      update();
+      dispatchEvent(new Event('resize'));
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'p' || e.key === 'P'){
+      presenting = !presenting;
+      document.body.classList.toggle('presenting', presenting);
+      if (presenting){ collectStops(); goTo(nearestStop()); }
+      e.preventDefault();
+      return;
+    }
+    if (!presenting || !stops.length) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' '){
+      e.preventDefault(); goTo(navBase() + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp'){
+      e.preventDefault(); goTo(navBase() - 1);
+    } else if (e.key === 'Home'){
+      e.preventDefault(); goTo(0);
+    } else if (e.key === 'End'){
+      e.preventDefault(); goTo(stops.length - 1);
+    }
+  });
+})();
+</script>
+
+<script>
+(function(){
+  var TEXT = {
+    nw: ['s','Minutes and board decks are more sanitized, but their content is already known to management, so the opposition-chilling effect is near zero.'],
+    sw: ['s','Emails, texts and other informal communications shared with management are less sanitized and known to management, so both the sanitization and the opposition-chilling effects are very weak.'],
+    se: ['o','Informal communications among outside directors, excluding management, are less sanitized and highly vulnerable to the opposition-chilling effect.'],
+    ne: ['o','Some records, like minutes of in-camera sessions excluding management, can be both formal and hidden from management — although in practice management can often reach them. They are likely sanitized and, if they are truly hidden from management, vulnerable to opposition-chilling.'],
+    i1: ['s','Sanitization makes these records less informative, but disclosure of records already known to management does not chill opposition.'],
+    i2: ['s','Sanitization of formal records makes access to these informal records more informative, and disclosure of records known to management does not chill opposition. The two effects combined therefore favor more disclosure.'],
+    i3: ['o','These informal records are more informative, but their disclosure would chill opposition. Overall, courts should restrict access.'],
+    i4: ['o','These records are highly vulnerable to both effects, but only if they are not known to management. In that case, courts should restrict access.']
+  };
+  /* the card lingers 200ms after the pointer leaves, so crossing a border does not flicker */
+  function wire(cellSel, popId, upperHalf){
+    var pop = document.getElementById(popId);
+    if (!pop) return;
+    var body = pop.querySelector('p'), timer = null, showing = null;
+    document.querySelectorAll(cellSel).forEach(function(cell){
+      var key = cell.dataset.pop;
+      /* two guards, so a card never precedes the figure it explains:
+         the table must have finished composing, and the pointer must actually
+         move over the row — a pointer left resting where the table is about
+         to appear should not open anything */
+      function ready(){
+        var layer = cell.closest('.implayer');
+        return !layer || layer.classList.contains('composed');
+      }
+      function show(){
+        if (!ready()) return;
+        clearTimeout(timer);
+        if (showing === key && pop.classList.contains('on')) return;
+        showing = key;
+        var t = TEXT[key];
+        body.textContent = t[1];
+        pop.className = 'taxpop on ' + t[0] + (upperHalf ? (upperHalf(key) ? ' at-bottom' : ' at-top') : '');
+      }
+      function hide(){
+        clearTimeout(timer);
+        timer = setTimeout(function(){ pop.classList.remove('on'); showing = null; }, 200);
+      }
+      cell.addEventListener('mousemove', show);
+      cell.addEventListener('mouseleave', hide);
+      cell.addEventListener('focus', show);
+      cell.addEventListener('blur', hide);
+    });
+  }
+  wire('.taxcell', 'taxpop', function(k){ return k[0] === 'n'; });
+  wire('.impband', 'imppop', null);
+})();
+</script>
+
+<script>
+/* ---------- Act C ----------
+   (1) the two effect names glide out of the two-effects stage and become the
+       two headings; (2) at the last beat the four record words twirl out of
+       the rows and compose the implication table.
+   Both are measured at run time (FLIP), so no hard-coded offsets to drift. */
+(function(){
+  var sec = document.querySelector('.actC');
+  if (!sec) return;
+  var fig = sec.querySelector('.figure');
+  var imp = sec.querySelector('.implayer');
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* --- the names --- */
+  var pairs = ['closed', 'shared'].map(function(k){
+    return {from: sec.querySelector('.fxstage .fxname.' + k),
+            to:   sec.querySelector('.rechead.' + k)};
+  }).filter(function(p){ return p.from && p.to; });
+  var flown = false;
+  function fly(){
+    pairs.forEach(function(p){
+      var a = p.from.getBoundingClientRect(), b = p.to.getBoundingClientRect();
+      p.to.style.transition = 'none';
+      p.to.style.transform  = 'translate(' + (a.left - b.left) + 'px,' + (a.top - b.top) + 'px)';
+      p.to.style.opacity    = '1';
+      void p.to.offsetWidth;                    /* commit the start frame */
+      p.to.style.transition = 'transform .85s cubic-bezier(.4,0,.2,1)';
+      p.to.style.transform  = 'translate(0,0)';
+    });
+    flown = true;
+  }
+  function unfly(){
+    pairs.forEach(function(p){
+      p.to.style.transition = 'opacity .3s';
+      p.to.style.transform  = '';
+      p.to.style.opacity    = '';
+    });
+    flown = false;
+  }
+
+  /* --- the twirl --- */
+  var flyers = [], timer = null, composed = false;
+  function clearTwirl(){
+    clearTimeout(timer); timer = null;
+    flyers.forEach(function(f){ f.remove(); });
+    flyers = [];
+    imp.classList.remove('composed');
+    composed = false;
+  }
+  /* the table is solid once the words are down — driven off the animations
+     themselves, with a timer as backup, because a backgrounded tab stalls
+     both and would otherwise leave words hanging over an empty table */
+  function settle(){
+    if (!composed || !imp) return;
+    imp.classList.add('composed');
+    flyers.forEach(function(f){ f.style.opacity = '0'; });
+    clearTimeout(timer);
+    timer = setTimeout(function(){
+      flyers.forEach(function(f){ f.remove(); });
+      flyers = [];
+    }, 620);
+  }
+  function twirl(){
+    if (composed || !imp) return;
+    composed = true;
+    if (reduce){ imp.classList.add('composed'); return; }
+    var fr = fig.getBoundingClientRect();
+    var targets = imp.querySelectorAll('.rt .w'), anims = [];
+    Array.prototype.forEach.call(targets, function(t, i){
+      /* .kw is the bare word, so the flyer lifts off the glyphs themselves */
+      var src = sec.querySelector('.rh[data-src="' + t.dataset.word + '"] .kw');
+      if (!src) return;
+      var s = src.getBoundingClientRect(), b = t.getBoundingClientRect();
+      var f = document.createElement('p');
+      f.className = 'twirl';
+      f.textContent = t.textContent;
+      f.style.left = (s.left - fr.left) + 'px';
+      f.style.top  = (s.top  - fr.top)  + 'px';
+      fig.appendChild(f);
+      flyers.push(f);
+      var dx = b.left - s.left, dy = b.top - s.top;
+      anims.push(f.animate([
+        {transform:'translate(0,0) rotate(0deg) scale(1.15)'},
+        {transform:'translate(' + (dx * .45) + 'px,' + (dy * .45 - 46) + 'px) rotate(190deg) scale(.8)', offset:.5},
+        {transform:'translate(' + dx + 'px,' + dy + 'px) rotate(360deg) scale(1)'}
+      ], {duration:1150, delay:i * 85, easing:'cubic-bezier(.42,0,.2,1)', fill:'both'}));
+    });
+    Promise.all(anims.map(function(a){ return a.finished; })).then(settle, settle);
+    timer = setTimeout(settle, 1150 + 85 * Math.max(0, targets.length - 1) + 300);
+  }
+
+  function sync(){
+    var s = parseInt(sec.dataset.scene, 10) || 0;
+    if (s >= 2 && !flown) fly(); else if (s < 2 && flown) unfly();
+    if (s >= 10) twirl(); else if (composed) clearTwirl();
+    if (s >= 11) settle();          /* past the twirl beat, the table is never half-built */
+  }
+  new MutationObserver(sync).observe(sec, {attributes:true, attributeFilter:['data-scene']});
+  sync();
+})();
+</script>
+
+<script>
+/* ---------- Act D ----------
+   Two measured flights, same FLIP technique as Act C: the annotated phrase
+   "Compelling need" leaves the statute and becomes the subject of the frame,
+   then its two words separate into the headings of the closing build. */
+(function(){
+  var sec = document.querySelector('.actD');
+  if (!sec) return;
+  var src   = sec.querySelector('.cnsrc');
+  var words = sec.querySelector('.cnwords');
+  var pairs = [
+    {from: sec.querySelector('.cw-c'), to: sec.querySelector('.cnhead-c')},
+    {from: sec.querySelector('.cw-n'), to: sec.querySelector('.cnhead-n')}
+  ].filter(function(p){ return p.from && p.to; });
+
+  function flip(el, a, b, dur){
+    el.style.transition = 'none';
+    el.style.transform  = 'translate(' + (a.left - b.left) + 'px,' + (a.top - b.top) + 'px)';
+    el.style.opacity    = '1';
+    void el.offsetWidth;                       /* commit the start frame */
+    el.style.transition = 'transform ' + dur + ' cubic-bezier(.4,0,.2,1), opacity .4s ease';
+    el.style.transform  = 'translate(0,0)';
+  }
+  function reset(el){
+    el.style.transition = 'opacity .3s';
+    el.style.transform  = '';
+    el.style.opacity    = '';
+  }
+
+  var lifted = false, split = false;
+  function sync(){
+    var s = parseInt(sec.dataset.scene, 10) || 0;
+
+    if (s >= 6 && !lifted){
+      if (src && words) flip(words, src.getBoundingClientRect(), words.getBoundingClientRect(), '.9s');
+      lifted = true;
+    } else if (s < 6 && lifted){
+      if (words) reset(words);
+      lifted = false;
+    }
+
+    if (s >= 9 && !split){
+      pairs.forEach(function(p){
+        flip(p.to, p.from.getBoundingClientRect(), p.to.getBoundingClientRect(), '.85s');
+      });
+      split = true;
+    } else if (s < 9 && split){
+      pairs.forEach(function(p){ reset(p.to); });
+      split = false;
+    }
+  }
+  new MutationObserver(sync).observe(sec, {attributes:true, attributeFilter:['data-scene']});
+  sync();
+})();
+</script>
+
+<script>
+/* ---------- the fork ----------
+   Both strands start folded. At the beat where the two effects are lit, each
+   name opens its own story; the end of a story folds it away again and puts
+   the reader back on the fork, so the other one can be taken next. Scrolling
+   past without choosing goes straight on to the taxonomy.
+   Folding uses inline display, so clearing it restores whatever the stylesheet
+   says for the current layout (grid on desktop, flex on mobile). With scripting
+   off nothing is folded and the page is simply the old linear read. */
+(function(){
+  var actA = document.querySelector('.actA');
+  var actB = document.querySelector('.actB');
+  if (!actA || !actB) return;
+  var actS   = document.querySelector('.actS');
+  var stepsO = [].slice.call(actA.querySelectorAll('.step.br-o'));
+  var fork   = actA.querySelector('.step[data-step="6"]');
+  var pills  = [].slice.call(document.querySelectorAll('.fxname[data-fork]'));
+  var seen   = {o:false, s:false};
+  var openK  = null;
+  /* where each side story returns to, and which beat is its last */
+  var HOME = {o: fork, s: fork, v: document.querySelector('.actD .step[data-step="6"]')};
+
+  function fold(k, folded){
+    if (k === 'o') stepsO.forEach(function(el){ el.style.display = folded ? 'none' : ''; });
+    else if (k === 's') actB.style.display = folded ? 'none' : '';
+    else if (actS) actS.style.display = folded ? 'none' : '';
+  }
+
+  function centre(el){
+    /* read after the fold, so the page has already resized around it.
+       'auto' on purpose: a smooth sweep would scroll through the two build
+       beats, and the point of clicking is to arrive already built. */
+    var r = el.getBoundingClientRect();
+    window.scrollTo({top: scrollY + r.top + r.height / 2 - innerHeight / 2, behavior: 'auto'});
+  }
+  function mark(){
+    pills.forEach(function(p){ p.classList.toggle('forkdone', !!seen[p.dataset.fork]); });
+  }
+  function open(k){
+    ['o','s','v'].forEach(function(x){ fold(x, x !== k); });
+    openK = k;
+    if (k in seen){ seen[k] = true; mark(); }
+    dispatchEvent(new Event('scroll'));
+    /* land on the beat where the story is already running: the name has taken
+       its heading position and the scene and its card are up. The build beats
+       before it stay in the flow for anyone who scrolls back. */
+    centre(k === 'o' ? actA.querySelector('.step[data-step="9"]')
+         : k === 's' ? actB.querySelector('.step[data-step="4"]')
+                     : actS.querySelector('.step[data-step="1"]'));
+  }
+  function back(){
+    if (!openK) return;
+    var home = HOME[openK] || fork;
+    ['o','s','v'].forEach(function(x){ fold(x, true); });
+    openK = null;
+    dispatchEvent(new Event('scroll'));
+    centre(home);
+  }
+
+  ['o','s','v'].forEach(function(x){ fold(x, true); });
+  pills.forEach(function(p){
+    p.addEventListener('click', function(){ open(p.dataset.fork); });
+    p.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(p.dataset.fork); }
+    });
+  });
+  document.querySelectorAll('.clickcue[data-strand]').forEach(function(c){
+    c.addEventListener('click', function(){ open(c.dataset.strand); });
+    c.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(c.dataset.strand); }
+    });
+  });
+
+  /* a way back on every beat of a side story, above the card and always there */
+  stepsO.concat([].slice.call(actB.querySelectorAll('.step')))
+        .concat(actS ? [].slice.call(actS.querySelectorAll('.step')) : []).forEach(function(st){
+    if (!st.querySelector('.card')) return;
+    var bar = document.createElement('div');
+    bar.className = 'backbar';
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'retbtn';
+    b.innerHTML = '&larr; Back to main story';
+    b.dataset.wired = '1';
+    b.addEventListener('click', back);
+    bar.appendChild(b);
+    st.insertBefore(bar, st.firstChild);
+    st.classList.add('hasback');
+  });
+  document.querySelectorAll('.retbtn').forEach(function(b){
+    if (b.dataset.wired) return;
+    b.dataset.wired = '1';
+    b.addEventListener('click', back);
+  });
+  document.querySelectorAll('.startover').forEach(function(b){
+    b.addEventListener('click', function(){
+      ['o','s','v'].forEach(function(x){ fold(x, true); });
+      openK = null;
+      seen.o = false; seen.s = false; mark();
+      dispatchEvent(new Event('scroll'));
+      window.scrollTo({top: 0, behavior: 'auto'});
+    });
+  });
+})();
+</script>
+
+<script>
+/* ---------- the two explore panels ----------
+   Not side stories: they open over the closing figure and close again, so the
+   reader never leaves the beat. Each is a short deck flipped page by page,
+   rather than one long scroll. */
+(function(){
+  var sec = document.querySelector('.actD');
+  if (!sec) return;
+  var live = null;
+
+  function pages(panel){ return [].slice.call(panel.querySelectorAll('.expage')); }
+  function show(panel, i){
+    var ps = pages(panel);
+    i = Math.max(0, Math.min(ps.length - 1, i));
+    panel.dataset.page = i;
+    ps.forEach(function(el, n){ el.classList.toggle('on', n === i); });
+    panel.querySelectorAll('.expdots i').forEach(function(d, n){ d.classList.toggle('on', n === i); });
+    panel.querySelector('.expprev').disabled = (i === 0);
+    panel.querySelector('.expnext').disabled = (i === ps.length - 1);
+  }
+  sec.querySelectorAll('.expanel').forEach(function(panel){
+    var dots = panel.querySelector('.expdots');
+    pages(panel).forEach(function(){ dots.appendChild(document.createElement('i')); });
+    panel.querySelector('.expprev').addEventListener('click', function(){
+      show(panel, (+panel.dataset.page || 0) - 1);
+    });
+    panel.querySelector('.expnext').addEventListener('click', function(){
+      show(panel, (+panel.dataset.page || 0) + 1);
+    });
+    show(panel, 0);
+  });
+
+  /* the panel is fixed but the page behind it is not: without this a stray
+     wheel movement while reading scrolls the deck to another beat, and closing
+     the panel reveals that beat instead of the one it was opened from */
+  var held = 0;
+  function lock(on){
+    var root = document.documentElement;
+    if (on){
+      held = scrollY;
+      var bar = innerWidth - root.clientWidth;
+      root.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+      if (bar > 0) document.body.style.paddingRight = bar + 'px';
+    } else {
+      root.style.overflow = '';
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+      window.scrollTo({top: held, behavior: 'auto'});
+    }
+  }
+  function close(){
+    if (!live) return;
+    live = null;
+    sec.classList.remove('panel-open');
+    sec.querySelectorAll('.expanel').forEach(function(p){ p.hidden = true; });
+    lock(false);
+  }
+  function open(id){
+    var panel = sec.querySelector('#panel-' + id);
+    if (!panel) return;
+    if (live){ live.hidden = true; } else { lock(true); }
+    panel.hidden = false;
+    show(panel, 0);
+    live = panel;
+    sec.classList.add('panel-open');
+  }
+  sec.querySelectorAll('.clickcue[data-panel]').forEach(function(c){
+    c.addEventListener('click', function(){ open(c.dataset.panel); });
+    c.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(c.dataset.panel); }
+    });
+  });
+  sec.querySelectorAll('.expclose').forEach(function(b){ b.addEventListener('click', close); });
+  /* overflow:hidden alone does not stop every scroll source */
+  function hold(e){ if (live) e.preventDefault(); }
+  addEventListener('wheel', hold, {passive:false});
+  addEventListener('touchmove', hold, {passive:false});
+  addEventListener('keydown', function(e){
+    if (e.key === 'Escape'){ close(); return; }
+    if (!live) return;
+    if (e.key === 'ArrowRight'){ e.preventDefault(); show(live, (+live.dataset.page || 0) + 1); }
+    if (e.key === 'ArrowLeft'){ e.preventDefault(); show(live, (+live.dataset.page || 0) - 1); }
+  });
+})();
+</script>
