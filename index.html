@@ -465,9 +465,9 @@
   .step.hasback{flex-direction:column; align-items:flex-start; justify-content:center}
 
   /* ============ the survey side story ============ */
-  /* this strand is parked immediately before the outro, so it needs a deeper
-     run-out: without it the outro shows through in the moment before the
-     reader is returned to the card that offered the survey */
+  /* this strand sits immediately before the takeaways, so it needs a deeper
+     run-out: without it the next section shows through at the end of the
+     strand, before the reader reaches the way back */
   .actS .steps{padding-bottom:135vh}
   .svlayer{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
            padding:2vh 1vw; box-sizing:border-box}
@@ -679,44 +679,14 @@
   #imppop{top:50%; bottom:auto; left:auto; right:6px; transform:translateY(-50%);
           width:min(300px, 40%); min-height:172px; display:flex; align-items:center}
 
-  .taxlayer{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:2vh 1vw; box-sizing:border-box}
-  .taxwrap{position:relative; width:100%; max-width:780px}
-  .taxhead{display:grid; grid-template-columns:118px 1fr 1fr; gap:0}
-  .taxhead .h{display:block; font:600 16px/1.3 var(--ui); color:var(--ink)}
-  .taxhead .sub{display:block; font:italic 400 11.5px/1.4 var(--ui); color:var(--mut); margin-top:2px}
-  .taxhead > div{text-align:center; padding:0 10px 10px}
-  .taxbody{display:grid; grid-template-columns:118px 1fr 1fr; grid-auto-rows:1fr; border:1px solid var(--hair2); border-radius:4px; overflow:hidden}
-  .taxrowlab{display:flex; flex-direction:column; justify-content:center; align-items:flex-end;
-             padding:0 14px 0 0; text-align:right; background:var(--paper)}
-  .taxrowlab .h{font:600 16px/1.3 var(--ui); color:var(--ink)}
-  .taxrowlab .sub{font:italic 400 11px/1.4 var(--ui); color:var(--mut); margin-top:2px}
-  .taxcell{padding:20px 18px; text-align:center; border-left:1px solid var(--hair2); border-top:1px solid var(--hair2);
-           cursor:default; transition:filter .2s, box-shadow .2s}
-  .taxbody > .taxcell:nth-of-type(-n+2){border-top:0}
-  .taxcell:hover{filter:saturate(1.5) brightness(.985); box-shadow:inset 0 0 0 2px currentColor}
-  /* an effect present is stated in its own colour; absent is muted */
-  .taxcell .eff{font:500 15px/1.45 var(--ui); margin:0 0 2px}
-  .taxcell .eff.off{color:var(--mut)}
-  .taxcell .eff.on-s{color:var(--shared); font-weight:600}
-  .taxcell .eff.on-o{color:var(--closed); font-weight:600}
-  .taxcell .ex{font:italic 400 12px/1.5 var(--ui); color:var(--sec); margin:12px 0 0}
-  /* cell tint = which effects live there */
-  .taxcell.qnw{background:var(--shared-wash); color:var(--shared)}
-  .taxcell.qse{background:var(--closed-wash); color:var(--closed)}
-  .taxcell.qne{background:linear-gradient(135deg, var(--shared-wash), var(--closed-wash)); color:var(--closed)}
-  .taxcell.qsw{background:var(--surface); color:var(--hair2)}
   .taxpop{position:absolute; left:6%; right:6%; z-index:6; opacity:0; pointer-events:none;
           background:color-mix(in srgb, var(--card) 96%, transparent); border:1px solid var(--hair2);
           border-left:3px solid var(--acc); border-radius:4px; padding:18px 22px;
           box-shadow:0 16px 44px rgba(0,0,0,.20); transition:opacity .18s ease}
   .taxpop p{font-family:var(--serif); font-size:15.5px; line-height:1.55; margin:0; color:var(--ink)}
   .taxpop.on{opacity:1}
-  .taxpop.at-top{top:11%}      /* shown when a bottom-row cell is hovered */
-  .taxpop.at-bottom{top:54%}   /* shown when a top-row cell is hovered */
   .taxpop.o{border-left-color:var(--closed)} .taxpop.s{border-left-color:var(--shared)}
   @media (max-width: 880px){
-    .taxhead, .taxbody{grid-template-columns:70px 1fr 1fr}
-    .taxcell{padding:12px 10px} .taxcell .eff{font-size:12.5px} .taxcell .ex{font-size:10.5px}
     /* mobile keeps the card in flow: the figure holds the top of the screen
        and the activation line sits at 78vh, so there is nowhere to pin it */
     .card{opacity:0; transform:translateY(18px); transition:opacity .4s ease, transform .5s ease}
@@ -860,7 +830,7 @@
       </div>
     </div>
     <div class="overlaycard rv" data-show="7">
-      <p class="ocq">Should shareholders have access to these texts?</p>
+      <p class="ocq">Should shareholders have access to these texts as part of their inspection rights?</p>
     </div>
   </div>
   <div class="steps">
@@ -1299,42 +1269,6 @@
       </div>
     </div>
 
-    <template id="parked-taxonomy">
-    <div class="taxlayer rv" data-show="2">
-      <div class="taxwrap">
-        <div class="taxhead">
-          <div></div>
-          <div><span class="h">Shared</span><span class="sub">content known to management</span></div>
-          <div><span class="h">Closed</span><span class="sub">content unknown to management</span></div>
-        </div>
-        <div class="taxbody">
-          <div class="taxrowlab"><span class="h">Formal</span><span class="sub">prepared, reviewed, adopted</span></div>
-          <div class="taxcell qnw" data-pop="nw" tabindex="0">
-            <p class="eff on-s">Sanitization <b>+</b></p>
-            <p class="eff off">Opposition-chilling &minus;</p>
-            <p class="ex">minutes, board decks, management memos</p>
-          </div>
-          <div class="taxcell qne" data-pop="ne" tabindex="0">
-            <p class="eff on-s">Sanitization <b>+</b></p>
-            <p class="eff on-o">Opposition-chilling <b>+</b></p>
-            <p class="ex">in-camera session minutes, special-committee files, SLC investigation records</p>
-          </div>
-          <div class="taxrowlab"><span class="h">Informal</span><span class="sub">no production cycle</span></div>
-          <div class="taxcell qsw" data-pop="sw" tabindex="0">
-            <p class="eff off">Sanitization &minus;</p>
-            <p class="eff off">Opposition-chilling &minus;</p>
-            <p class="ex">emails, texts and notes shared with management</p>
-          </div>
-          <div class="taxcell qse" data-pop="se" tabindex="0">
-            <p class="eff off">Sanitization &minus;</p>
-            <p class="eff on-o">Opposition-chilling <b>+</b></p>
-            <p class="ex">director-to-director exchanges excluding management</p>
-          </div>
-        </div>
-        <div class="taxpop" id="taxpop"><p></p></div>
-      </div>
-    </div>
-    </template>
 
     <div class="overlaycard rv" data-show="12">
       <p class="ocq">Can Delaware courts apply these insights under current law?</p>
@@ -1978,17 +1912,13 @@
 <script>
 (function(){
   var TEXT = {
-    nw: ['s','Minutes and board decks are more sanitized, but their content is already known to management, so the opposition-chilling effect is near zero.'],
-    sw: ['s','Emails, texts and other informal communications shared with management are less sanitized and known to management, so both the sanitization and the opposition-chilling effects are very weak.'],
-    se: ['o','Informal communications among outside directors, excluding management, are less sanitized and highly vulnerable to the opposition-chilling effect.'],
-    ne: ['o','Some records, like minutes of in-camera sessions excluding management, can be both formal and hidden from management — although in practice management can often reach them. They are likely sanitized and, if they are truly hidden from management, vulnerable to opposition-chilling.'],
     i1: ['s','Sanitization makes these records less informative, but disclosure of records already known to management does not chill opposition.'],
     i2: ['s','Sanitization of formal records makes access to these informal records more informative, and disclosure of records known to management does not chill opposition. The two effects combined therefore favor more disclosure.'],
     i3: ['o','These informal records are more informative, but their disclosure would chill opposition. Overall, courts should restrict access.'],
     i4: ['o','These records are highly vulnerable to both effects, but only if they are not known to management. In that case, courts should restrict access.']
   };
   /* the card lingers 200ms after the pointer leaves, so crossing a border does not flicker */
-  function wire(cellSel, popId, upperHalf){
+  function wire(cellSel, popId){
     var pop = document.getElementById(popId);
     if (!pop) return;
     var body = pop.querySelector('p'), timer = null, showing = null;
@@ -2009,7 +1939,7 @@
         showing = key;
         var t = TEXT[key];
         body.textContent = t[1];
-        pop.className = 'taxpop on ' + t[0] + (upperHalf ? (upperHalf(key) ? ' at-bottom' : ' at-top') : '');
+        pop.className = 'taxpop on ' + t[0];
       }
       function hide(){
         clearTimeout(timer);
@@ -2021,8 +1951,7 @@
       cell.addEventListener('blur', hide);
     });
   }
-  wire('.taxcell', 'taxpop', function(k){ return k[0] === 'n'; });
-  wire('.impband', 'imppop', null);
+  wire('.impband', 'imppop');
 })();
 </script>
 
