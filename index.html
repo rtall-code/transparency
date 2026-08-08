@@ -142,7 +142,7 @@
   .gphoto{display:block; width:300px; height:390px}
   .phint{font:400 10.5px/1.5 var(--ui); color:var(--mut); text-align:center; margin-top:9px}
   .secg .gstage .crayon{position:absolute; left:0; top:0; width:620px; height:600px; max-width:none; max-height:none; pointer-events:none}
-  .crayon path{fill:none; stroke:var(--crayon); stroke-width:4.5; stroke-opacity:.92; stroke-linecap:round; stroke-linejoin:round}
+  .crayon path{fill:none; stroke:var(--crayon); stroke-width:2.4; stroke-opacity:1; stroke-linecap:round; stroke-linejoin:round}
   .handnote{position:absolute; left:14px; top:436px; width:232px; margin:0; font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-size:13.5px; line-height:1.6; color:var(--crayon); transform:rotate(-2deg)}
   .bookwrap{position:absolute; left:270px; top:70px; width:260px; height:340px}
   .bookcover{position:relative; width:100%; height:100%; border-radius:5px 10px 10px 5px; background:linear-gradient(100deg,#152c49,#1d3a5f 45%,#26476f); box-shadow:inset 26px 0 26px -20px rgba(0,0,0,.6), inset -3px 0 8px -4px rgba(255,255,255,.12), 0 16px 38px rgba(0,0,0,.32); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px}
@@ -867,15 +867,9 @@
         <canvas class="gphoto" id="gphoto" width="300" height="390"></canvas>
       </figure>
       <svg class="crayon" viewBox="0 0 620 600" aria-hidden="true">
-        <defs>
-          <filter id="crayonrough" x="-10%" y="-10%" width="120%" height="120%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" result="n"/>
-            <feDisplacementMap in="SourceGraphic" in2="n" scale="6"/>
-          </filter>
-        </defs>
-        <g filter="url(#crayonrough)">
-          <path class="drawp rv" data-show="2" pathLength="1" d="M148 420 C 84 336, 128 214, 368 170"/>
-          <path class="drawp d2 rv" data-show="2" pathLength="1" d="M346 156 L 370 170 L 348 187"/>
+        <g>
+          <path class="drawp rv" data-show="2" pathLength="1" d="M148 420 C 84 336, 120 226, 296 206"/>
+          <path class="drawp d2 rv" data-show="2" pathLength="1" d="M283 202 L 296 206 L 284 213"/>
         </g>
       </svg>
       <p class="handnote rv" data-show="2">This is J.&thinsp;W. Guthrie, President of the Commercial National Bank. He didn&rsquo;t want to give Harkness, a minority shareholder, the books and accounts of the bank. He lost.</p>
