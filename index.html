@@ -158,9 +158,11 @@
                         max-width:none; max-height:none; pointer-events:none; z-index:3}
   .crayon path{fill:none; stroke:var(--crayon); stroke-width:2.4; stroke-opacity:1;
                stroke-linecap:round; stroke-linejoin:round}
-  .handnote{position:absolute; left:14px; top:436px; width:232px; margin:0; z-index:3;
+  /* 13.5 -> 20.25px, +50%. At the old 232px width that runs off the bottom of
+     the 600px stage, so the note widens into the space under the plate. */
+  .handnote{position:absolute; left:14px; top:452px; width:520px; margin:0; z-index:3;
             font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive;
-            font-size:13.5px; line-height:1.6; color:var(--crayon); transform:rotate(-2deg)}
+            font-size:20.25px; line-height:1.6; color:var(--crayon); transform:rotate(-2deg)}
 
   /* ============ scrolly layout ============ */
   .scrolly{display:grid; grid-template-columns:minmax(320px,400px) minmax(0,1fr); align-items:start; background:var(--paper); max-width:1180px; margin:0 auto}
