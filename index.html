@@ -469,9 +469,13 @@
   .retbtn:hover{background:var(--acc); border-color:var(--acc); color:var(--paper)}
   /* one per beat, shown only on the beat you are on, so the column never
      stacks up a column of buttons */
-  .backbar{margin:0 0 13px; opacity:0; transition:opacity .3s}
-  .step.active .backbar{opacity:1}
-  .step.hasback{flex-direction:column; align-items:flex-start; justify-content:center}
+  /* The way back is pinned rather than repeated on every beat, so it does not
+     scroll away with the card that happens to be showing. The cards ride over
+     it: .card is lifted above it, and the bar sits below them. */
+  .backfixed{position:fixed; top:80px; z-index:6; opacity:0; pointer-events:none;
+             transition:opacity .35s ease}
+  .backfixed.on{opacity:1; pointer-events:auto}
+  .card{position:relative; z-index:7}
 
   /* ============ the survey side story ============ */
   /* this strand sits immediately before the takeaways, so it needs a deeper
@@ -2116,12 +2120,14 @@
     centre(k === 'o' ? actA.querySelector('.step[data-step="9"]')
          : k === 's' ? actB.querySelector('.step[data-step="4"]')
                      : actS.querySelector('.step[data-step="1"]'));
+    showBack(true);
   }
   function back(){
     if (!openK) return;
     var home = HOME[openK] || fork;
     ['o','s','v'].forEach(function(x){ fold(x, true); });
     openK = null;
+    showBack(false);
     dispatchEvent(new Event('scroll'));
     centre(home);
   }
@@ -2140,22 +2146,33 @@
     });
   });
 
-  /* a way back on every beat of a side story, above the card and always there */
-  stepsO.concat([].slice.call(actB.querySelectorAll('.step')))
-        .concat(actS ? [].slice.call(actS.querySelectorAll('.step')) : []).forEach(function(st){
-    if (!st.querySelector('.card')) return;
-    var bar = document.createElement('div');
-    bar.className = 'backbar';
-    var b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'retbtn';
-    b.innerHTML = '&larr; Back to main story';
-    b.dataset.wired = '1';
-    b.addEventListener('click', back);
-    bar.appendChild(b);
-    st.insertBefore(bar, st.firstChild);
-    st.classList.add('hasback');
-  });
+  /* one way back for the whole strand, pinned to the viewport */
+  var backBar = document.createElement('div');
+  backBar.className = 'backfixed';
+  var backBtn = document.createElement('button');
+  backBtn.type = 'button';
+  backBtn.className = 'retbtn';
+  backBtn.innerHTML = '&larr; Back to main story';
+  backBtn.dataset.wired = '1';
+  backBtn.addEventListener('click', back);
+  backBar.appendChild(backBtn);
+  document.body.appendChild(backBar);
+
+  /* aligned with the card column of whichever strand is open, measured rather
+     than assumed: the column is centred and its offset moves with the window */
+  var STRANDSEC = {o: actA, s: actB, v: actS};
+  function placeBack(){
+    var sec = STRANDSEC[openK];
+    var col = sec && sec.querySelector('.steps');
+    if (!col) return;
+    var r = col.getBoundingClientRect();
+    backBar.style.left = Math.round(r.left + 28) + 'px';
+  }
+  function showBack(on){
+    if (on) placeBack();
+    backBar.classList.toggle('on', !!on);
+  }
+  addEventListener('resize', placeBack);
   document.querySelectorAll('.retbtn').forEach(function(b){
     if (b.dataset.wired) return;
     b.dataset.wired = '1';
@@ -2165,6 +2182,7 @@
     b.addEventListener('click', function(){
       ['o','s','v'].forEach(function(x){ fold(x, true); });
       openK = null;
+      showBack(false);
       seen.o = false; seen.s = false; mark();
       dispatchEvent(new Event('scroll'));
       window.scrollTo({top: 0, behavior: 'auto'});
