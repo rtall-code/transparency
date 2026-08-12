@@ -165,20 +165,20 @@
             font-size:20.25px; line-height:1.6; color:var(--crayon); transform:rotate(-2deg)}
 
   /* ============ scrolly layout ============ */
-  .scrolly{display:grid; grid-template-columns:minmax(320px,400px) minmax(0,1fr); align-items:start; background:var(--paper); max-width:1180px; margin:0 auto}
+  .scrolly{display:grid; grid-template-columns:minmax(320px,470px) minmax(0,1fr); align-items:start; background:var(--paper); max-width:1180px; margin:0 auto}
   /* The bottom padding must be at least the activation line (50vh), or the
      sticky figure starts sliding away before the last beat has finished
      playing — which showed up as the ledger's second column populating while
      the whole scene was already leaving. 32vh was 18vh short. */
   .steps{padding:28vh 0 56vh 0}
   .step{min-height:42vh; display:flex; align-items:center; padding:0 8px 0 clamp(12px,1.6vw,28px)}
-  .card{background:var(--card); border:1px solid var(--hair); border-left:3px solid var(--hair2); border-radius:3px; padding:24px 26px; max-width:420px; box-shadow:0 1px 2px rgba(0,0,0,.05); opacity:.35; transition:opacity .4s, border-color .4s}
+  .card{background:var(--card); border:1px solid var(--hair); border-left:3px solid var(--hair2); border-radius:3px; padding:26px 28px; max-width:470px; box-shadow:0 1px 2px rgba(0,0,0,.05); opacity:.35; transition:opacity .4s, border-color .4s}
   .step.active .card{border-left-color:var(--acc)}   /* opacity is set per layout, below */
-  .card .kick{font:600 10.5px/1.4 var(--ui); letter-spacing:.14em; text-transform:uppercase; color:var(--acc); margin:0 0 12px}
-  .card p{font-size:16.5px; line-height:1.62; margin:0 0 12px}
+  .card .kick{font:600 11.5px/1.4 var(--ui); letter-spacing:.14em; text-transform:uppercase; color:var(--acc); margin:0 0 12px}
+  .card p{font-size:18.5px; line-height:1.6; margin:0 0 13px}
   .card p:last-of-type{margin-bottom:0}
   .card .q{font-style:italic}
-  .card .cite{font:400 11px/1.6 var(--ui); color:var(--mut); border-top:1px dashed var(--hair); margin-top:14px; padding-top:9px}
+  .card .cite{font:400 12px/1.6 var(--ui); color:var(--mut); border-top:1px dashed var(--hair); margin-top:14px; padding-top:9px}
   .figure{position:sticky; top:0; height:100vh; display:flex; align-items:center; justify-content:center; padding:3vh 1.5vw; box-sizing:border-box}
   .figure svg, .figure .fig-html{width:100%; max-width:790px; max-height:94vh; height:auto}
 
